@@ -1,4 +1,3 @@
 class Kind < ApplicationRecord
-    has_many :kinds, dependent: :destroy
-    has_many :reservations, through: :reservation_kinds
+    has_many :reservations
 end
