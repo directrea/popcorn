@@ -1,0 +1,36 @@
+<table class="attr">
+
+  <tr>
+    <th>タイトル</th>
+    <td><%= @movie.title %></td>
+  </tr>
+  <tr>
+    <th>ストーリー</th>
+    <td><%= @movie.story %></td>
+  </tr>
+  <tr>
+    <th>公開日</th>
+    <td><%= @movie.release_date.strftime("%Y/%m/%d") %></td>
+  </tr>
+  <tr>
+    <th>上映時間</th>
+    <td><%= @movie.running_time %></td>
+  </tr>
+  <tr>
+    <th>配給</th>
+    <td><%= @movie.distribution %></td>
+  </tr>
+  <tr>
+    <th>監督</th>
+    <td><%= @movie.director%></td>
+  </tr>
+  <tr>
+    <th>俳優</th>
+    <td><%= @movie.actor%></td>
+  </tr>
+    <tr>
+    <th>状態</th>
+    <td><%= @movie.finished == 0 ? "詳細公開中" : "公開終了" %></td>
+  </tr>
+
+</table>

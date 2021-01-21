@@ -1,0 +1,26 @@
+<div align="center">
+    <table id="front-seat">
+        <tr>
+            <th>A</th>
+                <% Seat.where(id: 1..10).each do |seat| %>
+                    <% if @reserved.find_by(seat_id: seat.id) %>
+                        <td class="reserved"><%= seat.number+"-"+seat.en_number %></td class="reserved">
+                    <% else %>
+                        <td class="empty"><%= link_to "#{seat.number}-#{seat.en_number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="reserved">
+                    <% end %>
+                <% end %>
+            <th>A</th>
+        </tr>
+        <tr>
+            <th>B</th>
+                <% Seat.where(id: 11..20).each do |seat| %>
+                    <% if @reserved.find_by(seat_id: seat.id) %>
+                        <td class="reserved"><%= seat.number+"-"+seat.en_number %></td class="reserved">
+                    <% else %>
+                        <td class="empty"><%= link_to "#{seat.number}-#{seat.en_number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="reserved">
+                    <% end %>
+                <% end %>
+            <th>B</th>
+        </tr>
+    </table>
+</div>

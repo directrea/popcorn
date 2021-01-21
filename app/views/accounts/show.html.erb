@@ -1,0 +1,13 @@
+<% @page_title = "マイアカウント" %>
+
+<h1><%= @pagetitle %></h1>
+
+<ul class="toolbar">
+    <%= menu_link_to "あなたの予約一覧", reservations_path %>
+    <%= menu_link_to "アカウント情報の編集", :edit_account %>
+    <%= menu_link_to "パスワードの変更", :edit_password %>
+    <%= link_to "アカウント情報の削除", :account, method: :delete,
+            data: {confirm: "本当に削除しますか？"} unless current_member&.administrator? %>
+</ul>
+
+<%= render "accounts/body" %>

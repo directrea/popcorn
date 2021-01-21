@@ -1,0 +1,31 @@
+<% @page_title = "映画一覧" %>
+<h1><%= @page_title %><%= "※ログインすると予約できます" unless current_member %></h1>
+
+<%= form_tag(search_movies_path,:method => 'get') do %>
+  <%= text_field_tag "title" %>
+  <% today = Date.today%>
+  <% day=[today.strftime("%Y-%m-%d"),(today+1).strftime("%Y-%m-%d"),(today+2).strftime("%Y-%m-%d"),(today+3).strftime("%Y-%m-%d"),(today+4).strftime("%Y-%m-%d")]  %>
+  <%= select_tag "screening_date", options_for_select({"日付指定": nil,"#{day[0]}": day[0],"#{day[1]}": day[1],
+                                                        "#{day[2]}": day[2],"#{day[3]}": day[3],"#{day[4]}": day[4]}) %>
+  <%= submit_tag '検索', :name => nil %>
+<% end %>
+<table class="list">
+    <ul id="movie">
+        <% @movies.each do |movie| %>
+            <div class="movie_block">
+                <li>
+                    <h3 class="movie_title"><%= link_to movie.title, movie_path(id: movie.id) %>
+                    </h3>
+                    <% movie.performances.each do |pf| %>
+                            <p style="color: blue"><%= pf.screening_date.strftime("%m/%d") %></p>
+                            <% if current_member.present? %>
+                                <p><%= link_to pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M"), "/movies/#{movie.id}/performances/#{pf.id}/seats"  %></p>
+                            <% else %>
+                                <p><%= pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M") %>
+                            <% end %>
+                    <% end %>
+                </li>
+            </div>
+        <% end %>
+    </ul>
+</table>

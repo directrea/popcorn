@@ -1,0 +1,11 @@
+<% @page_title = "マイアカウント" %>
+
+<h1><%= @pagetitle %></h1>
+
+<ul class="toolbar">
+    <%= menu_link_to "あなたの予約一覧", reservations_path %>
+    <%= menu_link_to "アカウント情報の編集", :edit_account %>
+    <%= menu_link_to "パスワードの変更", :edit_password %>
+</ul>
+
+<%= render "members/body" %>

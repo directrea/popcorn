@@ -1,0 +1,176 @@
+<div align="center">
+    <table id="back-seat">
+        <tr>
+            <% Seat.where(id: 21..22).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+            <th>C</th>
+            <% Seat.where(id: 23..32).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+            <th>C</th>
+            <% Seat.where(id: 33..34).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+        </tr>
+        <tr>
+            <% Seat.where(id: 35..36).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+            <th>D</th>
+            <% Seat.where(id: 37..46).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+            <th>D</th>
+            <% Seat.where(id: 47..48).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+
+        </tr>
+        <tr>
+            <% Seat.where(id: 49..50).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+            <th>E</th>
+            <% Seat.where(id: 51..60).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+            <th>E</th>
+            <% Seat.where(id: 61..62).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+
+        </tr>
+        <tr>
+            <% Seat.where(id: 63..64).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+            <th>F</th>
+            <% Seat.where(id: 65..74).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+            <th>F</th>
+            <% Seat.where(id: 75..76).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+        </tr>
+        <tr>
+            <% Seat.where(id: 77..78).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+            <th>G</th>
+            <% Seat.where(id: 79..88).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+            <th>G</th>
+            <% Seat.where(id: 89..90).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+        </tr>
+        <tr>
+            <% Seat.where(id: 91..92).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+            <th>H</th>
+            <% Seat.where(id: 93..102).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+            <th>H</th>
+            <% Seat.where(id: 103..104).each do |seat| %>
+                <% if @reserved.find_by(seat_id: seat.id) %>
+                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
+                <% else %>
+                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
+                <% end %>
+            <% end %>
+        </tr>
+        <tr>
+            <th>14</th>
+            <th>13</th>
+            <th>&nbsp;</th>
+            <th>12</th>
+            <th>11</th>
+            <th>10</th>
+            <th>9</th>
+            <th>8</th>
+            <th>7</th>
+            <th>6</th>
+            <th>5</th>
+            <th>4</th>
+            <th>3</th>
+            <th>&nbsp;</th>
+            <th>2</th>
+            <th>1</th>
+
+        </tr>
+
+    </table>
+</div>

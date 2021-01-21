@@ -1,0 +1,17 @@
+
+<% @page_title = "予約" %>
+<h1><%= @page_title %></h1>
+
+
+<div id="right">
+    <ul>
+        <li><%= image_tag 'empty.png'%><p class="locate">　空席</p></li>
+        <li><%= image_tag 'reserved.png' %><p class="locate">　予約済み/選択不可</p></li>
+    </ul>
+</div>
+<div id="left">
+    <h2 align="center">スクリーン</h2>
+    <%= render "front_seat" %>
+    <%= render "back_seat" %>
+</div>
+

@@ -1,0 +1,39 @@
+<%= render "shared/errors", obj: @movie %>
+<table class="attr">
+    <tr>
+        <th><%= form.label :title, "タイトル" %></th>
+        <td><%= form.text_field :title, autocomplete: 'off' %></td>
+    </tr>
+    <tr>
+        <th><%= form.label :story, "ストーリー" %></th>
+        <td><%= form.text_area :story, size: "30x5", autocomplete: 'off' %></td>
+    </tr>
+    <tr>
+        <th><%= form.label :release_date, "公開日" %></th>
+        <td><%= form.date_select :release_date,
+                    use_month_numbers: true %></td>
+    </tr>
+    <tr>
+        <th><%= form.label :running_time, "上映時間" %></th>
+        <td><%= form.number_field :running_time, min:0, autocomplete: 'off' %></td>
+    </tr>
+    <tr>
+        <th><%= form.label :distribution, "配給" %></th>
+        <td><%= form.text_field :distribution, autocomplete: 'off' %></td>
+    </tr>
+    <tr>
+        <th><%= form.label :director, "監督" %></th>
+        <td><%= form.text_field :director, autocomplete: 'off' %></td>
+    </tr>
+    <tr>
+        <th><%= form.label :actor, "俳優" %></th>
+        <td><%= form.text_field :actor, autocomplete: 'off' %></td>
+    </tr>
+    <tr>
+        <th>状態</th>
+        <td><%= form.radio_button :finished, 0 %>
+        <%= form.label :finished_1, "公開中" %>
+        <%= form.radio_button :finished, 1 %>
+        <%= form.label :finished_2, "公開終了" %></td> 
+    </tr>
+</table>

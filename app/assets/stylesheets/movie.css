@@ -1,0 +1,24 @@
+li{
+    list-style: none;
+}
+.movie_title:hover{
+    text-decoration: underline;
+}
+.movie_block {
+    padding: 0.5em 1em;
+    margin: 0.5em 0;
+    font-weight: bold;
+    border: solid 3px #000000;
+}
+
+#movie{
+    padding-inline-start:10px;
+}
+
+div p{
+    display: inline-block;
+}
+.movie_title{
+    margin-block-end: 0em;
+}
+

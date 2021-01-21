@@ -1,0 +1,14 @@
+<% @page_title = "チケット選択" %>
+<h1><%= @page_title %></h1>
+
+
+<p><%= @movie.title %></p></br>
+<p><%= @performance.screening_date %></p></br>
+<p><%= @performance.start_time.strftime("%H:%M")+"~"+@performance.end_time.strftime("%H:%M") %></p></br>
+<p><%= @seat.en_number+"-"+@seat.number %></p>
+<%= form_for @reservation, url: movie_performance_seat_reservations_path do |f| %>
+    <%= f.select :kind_id, [["一般：￥2,000",1],["大学生・高校生：￥1,800",2],["幼児・小中高生：￥1,300",3],["シニア：￥1,300",4]]%>
+    <%= f.submit "add" %>
+<% end %>
+
+

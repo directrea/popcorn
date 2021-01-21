@@ -1,0 +1,22 @@
+<table class="attr">
+  <tr>
+    <th>タイトル</th>
+    <td><%= @movie.title  %></td>
+  </tr>
+  <tr>
+    <th>上映日</th>
+    <td><%= @performance.screening_date %></td>
+  </tr>
+  <tr>
+    <th>上映時間</th>
+    <td><%= @performance.start_time.strftime("%H:%M")+"~"+@performance.end_time.strftime("%H:%M") %></td>
+  </tr>
+  <tr>
+    <th>席</th>
+    <td><%= @seat.en_number+"-"+@seat.number %></td>
+  </tr>
+  <tr>
+    <th>チケット種別</th>
+    <td><%= @kind.kind_name+" ￥#{@kind.fee}" %></td>
+  </tr>
+</table>

@@ -1,0 +1,39 @@
+<% @page_title = "上映を登録 ※予約がある場合削除不可"%>
+<h1><%= @page_title %></h1>
+
+<table class ="list">
+    <thead>
+        <tr>
+            <th>年月日</th>
+            <th>時刻</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% @performances.each do |perf| %>
+            <tr>
+                <td><%= perf.screening_date.strftime("%Y/%m/%d") %></td>
+                <td><%= perf.start_time.strftime("%H:%M") %>~<%= perf.end_time.strftime("%H:%M") %></td>
+                <% if Performance.find_by(id: perf.id).seats.present? %>
+                    <td>×</td>
+                <% else %>
+                    <td><%= link_to "削除", "/movies/#{params[:movie_id]}/performances/#{perf.id}", method: :delete,
+                                data: {confirm: "本当に削除しますか？"} %></td>
+                <% end %>
+            </tr>
+        <% end %>
+        <%= form_for @performance, url: admin_movie_performances_path do |form| %>
+        <%= form.hidden_field :movie_id, :value => params[:movie_id] %>
+            <tr>
+                <td><%= form.date_select :screening_date,
+                            start_year: Time.current.year,
+                            use_month_numbers: true %></td>
+                <td><%= form.label :start_time, "開始時間："%>
+                    <%= form.time_select :start_time %></td>
+                    <% options = [1,2,3] %>
+                <td><%= form.submit "add" %></td>
+            </tr>
+        <% end %>
+    </tbody>
+</table>      
+

@@ -1,0 +1,45 @@
+td.empty {
+    background-color: rgb(17, 212, 238);
+}
+td.reserved{
+    background-color: rgb(111, 133, 153);
+}
+
+table#front-seat{
+    margin-left: 20px;
+}
+
+div#right{
+    width:auto;
+    min-height:500px;
+    height:auto;
+    float:right;
+    margin: 0px;
+    padding-top: 100px;
+
+}
+
+div#left{
+    width:550px;
+    min-height:500px;
+    height:auto;
+    margin-top:10px;
+}
+main#main{
+    width: 780px;
+}
+
+div#right p{
+    margin-bottom: 30px;
+}
+
+div#left h2{
+    margin-bottom: 30px;
+    color: rgba(46, 179, 184, 0.589);
+    border-bottom: 1px solid rgba(46, 179, 184, 0.589);
+}
+
+
+
+
+  

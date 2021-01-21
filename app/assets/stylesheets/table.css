@@ -1,0 +1,81 @@
+/* 表：一覧表示、詳細表示 */
+table.list th, table.attr th {
+  background-color: #499;
+  color: white;
+  font-weight: normal;
+  width: 150px;
+}
+
+table.list td, table.list th,
+table.attr td, table.attr th {
+  padding: 4px;
+  word-break: break-all;
+}
+
+table.list th {
+  text-align: left;
+}
+
+table.attr th {
+  text-align: right;
+
+  width: 50px;
+}
+
+table.list td, table.attr td {
+  background-color: rgba(120, 236, 226, 0.178);
+}
+
+/*ここから*/
+table.list, table.attr{
+  width: 100%;
+  border-collapse:separate;
+  border-spacing: 0;
+  font-size: 90%;
+  width: 100%;
+  table-layout: fixed;
+
+}
+
+table th:first-child{
+  border-radius: 5px 0 0 0;
+}
+
+table th:last-child{
+  border-radius: 0 5px 0 0;
+  border-right: 1px solid #3c6690;
+}
+
+table.list th, table.attr th {
+  text-align: center;
+  color:white;
+  background: linear-gradient(#829ebc,#225588);
+  border-left: 1px solid #3c6690;
+  border-top: 1px solid #3c6690;
+  border-bottom: 1px solid #3c6690;
+  box-shadow: 0px 1px 1px rgba(255,255,255,0.3) inset;
+  width: 25%;
+  padding: 10px 0;
+
+}
+
+table td{
+  border-left: 1px solid #a8b7c5;
+  border-bottom: 1px solid #a8b7c5;
+  border-top:none;
+  box-shadow: 0px -3px 5px 1px #eee inset;
+  width: auto;
+  padding: 10px 0;
+}
+
+table td:last-child{
+  border-right: 1px solid #a8b7c5;
+}
+
+table tr:last-child td:first-child {
+  border-radius: 0 0 0 5px;
+}
+
+table tr:last-child td:last-child {
+  border-radius: 0 0 5px 0;
+}
