@@ -37,7 +37,7 @@ ActiveRecord::Schema.define(version: 2021_01_12_073946) do
   create_table "movies", force: :cascade do |t|
     t.string "title", null: false
     t.text "story", null: false
-    t.datetime "release_date", null: false
+    t.date "release_date", null: false
     t.integer "running_time", null: false
     t.string "distribution", null: false
     t.string "director", null: false
@@ -61,6 +61,7 @@ ActiveRecord::Schema.define(version: 2021_01_12_073946) do
     t.date "screening_date", null: false
     t.time "start_time", null: false
     t.time "end_time", null: false
+    t.integer "screen", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["movie_id"], name: "index_performances_on_movie_id"

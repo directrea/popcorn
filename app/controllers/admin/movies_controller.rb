@@ -40,9 +40,26 @@ class Admin::MoviesController < Admin::Base
         else
         render "edit"
         end
-  end
-
+    end
 
     def destroy
+        @movie = Movie.find(params[:id])
+        if exist_reservation(@movie)
+            redirect_to [:admin,@movie], flash: {notice: "予約が存在するため映画を削除できません。"}
+        else
+            @movie.destroy
+            redirect_to admin_movies_path, flash: {notice: "映画名：#{@movie.title}を削除しました。"}
+        end
     end
-end
+
+    def exist_reservation(movie)
+        movie.performances.each do |pf|
+            pf.reservations.each do |r|
+                if r.present?
+                    return true
+                end
+            end
+        end
+        return false
+    end
+    end

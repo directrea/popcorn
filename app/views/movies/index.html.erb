@@ -19,7 +19,11 @@
                     <% movie.performances.each do |pf| %>
                             <p style="color: blue"><%= pf.screening_date.strftime("%m/%d") %></p>
                             <% if current_member.present? %>
-                                <p><%= link_to pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M"), "/movies/#{movie.id}/performances/#{pf.id}/seats"  %></p>
+                                <p><% if current_member&.administrator?%>
+                                        <p><%= pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M") %>
+                                    <% else %>
+                                        <%= link_to pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M"), "/movies/#{movie.id}/performances/#{pf.id}/seats"   %>
+                                    <% end %></p>
                             <% else %>
                                 <p><%= pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M") %>
                             <% end %>

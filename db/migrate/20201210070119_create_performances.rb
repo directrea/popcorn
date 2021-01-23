@@ -5,6 +5,8 @@ class CreatePerformances < ActiveRecord::Migration[5.2]
       t.date :screening_date, null: false
       t.time :start_time, null: false
       t.time :end_time, null: false
+      t.integer :screen, null: false
+      
       t.timestamps
     end
   end

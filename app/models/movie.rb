@@ -6,7 +6,13 @@ class Movie < ApplicationRecord
 
     validates :title,:distribution,:director, length: { maximum: 50 }
     validates :running_time, numericality: {only_integer: true, greater_than_or_equal_to: 0}
+    validate :date_before_start
 
+
+    def date_before_start
+      errors.add(:start_date, "は今日以降のものを選択してください") if
+      release_date < Date.today
+    end
 
 
     class << self

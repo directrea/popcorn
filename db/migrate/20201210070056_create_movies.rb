@@ -3,7 +3,7 @@ class CreateMovies < ActiveRecord::Migration[5.2]
     create_table :movies do |t|
       t.string :title, null: false
       t.text :story, null: false
-      t.datetime :release_date, null: false
+      t.date :release_date, null: false
       t.integer :running_time, null: false
       t.string :distribution, null: false
       t.string :director, null: false

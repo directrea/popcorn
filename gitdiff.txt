@@ -1,0 +1,4460 @@
+diff --git a/.DS_Store b/.DS_Store
+new file mode 100644
+index 0000000..f19fc8b
+Binary files /dev/null and b/.DS_Store differ
+diff --git a/Gemfile b/Gemfile
+index 4564772..2197c60 100644
+--- a/Gemfile
++++ b/Gemfile
+@@ -6,7 +6,11 @@ ruby '2.5.8'
+ # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
+ gem 'rails', '~> 5.2.4', '>= 5.2.4.4'
+ # Use sqlite3 as the database for Active Record
++group :development, :test do
+ gem 'sqlite3'
++end
++# Use postgress for the production mode
++gem 'pg', group: :production
+ # Use Puma as the app server
+ gem 'puma', '~> 3.11'
+ # Use SCSS for stylesheets
+@@ -15,17 +19,14 @@ gem 'sass-rails', '~> 5.0'
+ gem 'uglifier', '>= 1.3.0'
+ # See https://github.com/rails/execjs#readme for more supported runtimes
+ # gem 'mini_racer', platforms: :ruby
++gem 'therubyracer'
+ 
+-# Use CoffeeScript for .coffee assets and views
+-gem 'coffee-rails', '~> 4.2'
+ # Turbolinks makes navigating your web application faster. Read more: https://github.com/turbolinks/turbolinks
+ gem 'turbolinks', '~> 5'
+ # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
+ gem 'jbuilder', '~> 2.5'
+-# Use Redis adapter to run Action Cable in production
+-# gem 'redis', '~> 4.0'
+ # Use ActiveModel has_secure_password
+-# gem 'bcrypt', '~> 3.1.7'
++gem 'bcrypt', '~> 3.1.7'
+ 
+ # Use ActiveStorage variant
+ # gem 'mini_magick', '~> 4.8'
+@@ -36,6 +37,10 @@ gem 'jbuilder', '~> 2.5'
+ # Reduces boot times through caching; required in config/boot.rb
+ gem 'bootsnap', '>= 1.1.0', require: false
+ 
++gem 'email_validator', '~> 1.6'
++
++gem 'rails-i18n', '~> 5.1'
++
+ group :development, :test do
+   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
+   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
+@@ -48,6 +53,7 @@ group :development do
+   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
+   gem 'spring'
+   gem 'spring-watcher-listen', '~> 2.0.0'
++  gem 'rails-erd'
+ end
+ 
+ group :test do
+@@ -60,3 +66,6 @@ end
+ 
+ # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
+ gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
++
++# Use Minitest
++gem "minitest-rails", "~> 5.2.0"
+diff --git a/Gemfile.lock b/Gemfile.lock
+index df2787d..fbb5f93 100644
+--- a/Gemfile.lock
++++ b/Gemfile.lock
+@@ -47,12 +47,13 @@ GEM
+     archive-zip (0.12.0)
+       io-like (~> 0.3.0)
+     arel (9.0.0)
++    bcrypt (3.1.16)
+     bindex (0.8.1)
+-    bootsnap (1.5.1)
++    bootsnap (1.5.0)
+       msgpack (~> 1.0)
+     builder (3.2.4)
+     byebug (11.1.3)
+-    capybara (3.34.0)
++    capybara (3.33.0)
+       addressable
+       mini_mime (>= 0.1.3)
+       nokogiri (~> 1.8)
+@@ -61,33 +62,31 @@ GEM
+       regexp_parser (~> 1.5)
+       xpath (~> 3.2)
+     childprocess (3.0.0)
++    choice (0.2.0)
+     chromedriver-helper (2.1.1)
+       archive-zip (~> 0.10)
+       nokogiri (~> 1.8)
+-    coffee-rails (4.2.2)
+-      coffee-script (>= 2.2.0)
+-      railties (>= 4.0.0)
+-    coffee-script (2.4.1)
+-      coffee-script-source
+-      execjs
+-    coffee-script-source (1.12.2)
+-    concurrent-ruby (1.1.8)
++    concurrent-ruby (1.1.7)
+     crass (1.0.6)
+-    erubi (1.10.0)
++    email_validator (1.6.0)
++      activemodel
++    erubi (1.9.0)
+     execjs (2.7.0)
+-    ffi (1.14.2)
++    ffi (1.13.1)
++    ffi (1.13.1-x86-mingw32)
+     globalid (0.4.2)
+       activesupport (>= 4.2.0)
+-    i18n (1.8.7)
++    i18n (1.8.5)
+       concurrent-ruby (~> 1.0)
+     io-like (0.3.1)
+     jbuilder (2.10.1)
+       activesupport (>= 5.0.0)
++    libv8 (3.16.14.19)
+     listen (3.1.5)
+       rb-fsevent (~> 0.9, >= 0.9.4)
+       rb-inotify (~> 0.9, >= 0.9.7)
+       ruby_dep (~> 1.2)
+-    loofah (2.9.0)
++    loofah (2.7.0)
+       crass (~> 1.0.2)
+       nokogiri (>= 1.5.9)
+     mail (2.7.1)
+@@ -97,16 +96,22 @@ GEM
+     method_source (1.0.0)
+     mimemagic (0.3.5)
+     mini_mime (1.0.2)
+-    mini_portile2 (2.5.0)
+-    minitest (5.14.3)
++    mini_portile2 (2.4.0)
++    minitest (5.14.2)
++    minitest-rails (5.2.0)
++      minitest (~> 5.10)
++      railties (~> 5.2.0)
+     msgpack (1.3.3)
++    msgpack (1.3.3-x86-mingw32)
+     nio4r (2.5.4)
+-    nokogiri (1.11.1)
+-      mini_portile2 (~> 2.5.0)
+-      racc (~> 1.4)
++    nokogiri (1.10.10)
++      mini_portile2 (~> 2.4.0)
++    nokogiri (1.10.10-x86-mingw32)
++      mini_portile2 (~> 2.4.0)
++    pg (1.2.3)
++    pg (1.2.3-x86-mingw32)
+     public_suffix (4.0.6)
+     puma (3.12.6)
+-    racc (1.5.2)
+     rack (2.2.3)
+     rack-test (1.1.0)
+       rack (>= 1.0, < 3)
+@@ -126,19 +131,31 @@ GEM
+     rails-dom-testing (2.0.3)
+       activesupport (>= 4.2.0)
+       nokogiri (>= 1.6)
++    rails-erd (1.6.0)
++      activerecord (>= 4.2)
++      activesupport (>= 4.2)
++      choice (~> 0.2.0)
++      ruby-graphviz (~> 1.2)
+     rails-html-sanitizer (1.3.0)
+       loofah (~> 2.3)
++    rails-i18n (5.1.3)
++      i18n (>= 0.7, < 2)
++      railties (>= 5.0, < 6)
+     railties (5.2.4.4)
+       actionpack (= 5.2.4.4)
+       activesupport (= 5.2.4.4)
+       method_source
+       rake (>= 0.8.7)
+       thor (>= 0.19.0, < 2.0)
+-    rake (13.0.3)
++    rake (13.0.1)
+     rb-fsevent (0.10.4)
+     rb-inotify (0.10.1)
+       ffi (~> 1.0)
++    ref (2.0.0)
+     regexp_parser (1.8.2)
++    rexml (3.2.4)
++    ruby-graphviz (1.2.5)
++      rexml
+     ruby_dep (1.5.0)
+     rubyzip (2.3.0)
+     sass (3.7.4)
+@@ -167,14 +184,19 @@ GEM
+       activesupport (>= 4.0)
+       sprockets (>= 3.0.0)
+     sqlite3 (1.4.2)
+-    thor (1.1.0)
++    therubyracer (0.12.3)
++      libv8 (~> 3.16.14.15)
++      ref
++    thor (1.0.1)
+     thread_safe (0.3.6)
+     tilt (2.0.10)
+     turbolinks (5.2.1)
+       turbolinks-source (~> 5.2)
+     turbolinks-source (5.2.0)
+-    tzinfo (1.2.9)
++    tzinfo (1.2.7)
+       thread_safe (~> 0.1)
++    tzinfo-data (1.2020.4)
++      tzinfo (>= 1.0.0)
+     uglifier (4.2.0)
+       execjs (>= 0.3.0, < 3)
+     web-console (3.7.0)
+@@ -190,22 +212,30 @@ GEM
+ 
+ PLATFORMS
+   ruby
++  x64-unknown
++  x86-mingw32
+ 
+ DEPENDENCIES
++  bcrypt (~> 3.1.7)
+   bootsnap (>= 1.1.0)
+   byebug
+   capybara (>= 2.15)
+   chromedriver-helper
+-  coffee-rails (~> 4.2)
++  email_validator (~> 1.6)
+   jbuilder (~> 2.5)
+   listen (>= 3.0.5, < 3.2)
++  minitest-rails (~> 5.2.0)
++  pg
+   puma (~> 3.11)
+   rails (~> 5.2.4, >= 5.2.4.4)
++  rails-erd
++  rails-i18n (~> 5.1)
+   sass-rails (~> 5.0)
+   selenium-webdriver
+   spring
+   spring-watcher-listen (~> 2.0.0)
+   sqlite3
++  therubyracer
+   turbolinks (~> 5)
+   tzinfo-data
+   uglifier (>= 1.3.0)
+diff --git a/app/.DS_Store b/app/.DS_Store
+new file mode 100644
+index 0000000..f389cc5
+Binary files /dev/null and b/app/.DS_Store differ
+diff --git a/app/assets/.DS_Store b/app/assets/.DS_Store
+new file mode 100644
+index 0000000..c7bfc5a
+Binary files /dev/null and b/app/assets/.DS_Store differ
+diff --git a/app/assets/images/.DS_Store b/app/assets/images/.DS_Store
+new file mode 100644
+index 0000000..64c1b2b
+Binary files /dev/null and b/app/assets/images/.DS_Store differ
+diff --git a/app/assets/images/empty.png b/app/assets/images/empty.png
+new file mode 100644
+index 0000000..dc638d7
+Binary files /dev/null and b/app/assets/images/empty.png differ
+diff --git a/app/assets/images/reserved.png b/app/assets/images/reserved.png
+new file mode 100644
+index 0000000..651938a
+Binary files /dev/null and b/app/assets/images/reserved.png differ
+diff --git a/app/assets/images/screen.png b/app/assets/images/screen.png
+new file mode 100644
+index 0000000..000a06f
+Binary files /dev/null and b/app/assets/images/screen.png differ
+diff --git a/app/assets/images/selected.png b/app/assets/images/selected.png
+new file mode 100644
+index 0000000..3c3476d
+Binary files /dev/null and b/app/assets/images/selected.png differ
+diff --git a/app/assets/javascripts/application.js b/app/assets/javascripts/application.js
+index 82e6f0f..43ba7e9 100644
+--- a/app/assets/javascripts/application.js
++++ b/app/assets/javascripts/application.js
+@@ -12,5 +12,4 @@
+ //
+ //= require rails-ujs
+ //= require activestorage
+-//= require turbolinks
+ //= require_tree .
+diff --git a/app/assets/javascripts/cable.js b/app/assets/javascripts/cable.js
+deleted file mode 100644
+index 739aa5f..0000000
+--- a/app/assets/javascripts/cable.js
++++ /dev/null
+@@ -1,13 +0,0 @@
+-// Action Cable provides the framework to deal with WebSockets in Rails.
+-// You can generate new channels where WebSocket features live using the `rails generate channel` command.
+-//
+-//= require action_cable
+-//= require_self
+-//= require_tree ./channels
+-
+-(function() {
+-  this.App || (this.App = {});
+-
+-  App.cable = ActionCable.createConsumer();
+-
+-}).call(this);
+diff --git a/app/assets/javascripts/channels/.keep b/app/assets/javascripts/channels/.keep
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/app/assets/stylesheets/application.css b/app/assets/stylesheets/application.css
+index d05ea0f..f27e5d1 100644
+--- a/app/assets/stylesheets/application.css
++++ b/app/assets/stylesheets/application.css
+@@ -13,3 +13,197 @@
+  *= require_tree .
+  *= require_self
+  */
++
++/* ページ全体 */
++body {
++    background-color: white;
++    color: black;
++    margin: 0; padding: 0;
++    font-family: Meiryo, sans-serif;
++  }
++  
++  /* リンク */
++  a:link { color: #00c; }
++  a:visited { color: #00c; }
++  a:hover { color: #f00; }
++  a img { border: none; }
++  
++  /* ブロック要素 */
++  p, h1, h2, h3, table, ul {
++    margin: 0 0 1em;
++  }
++  
++  /* ナビゲーション */
++  nav ul,
++  ul.toolbar,
++  ul.links {
++    list-style-type: none;
++    margin: 0;
++    padding: 0;
++  }
++  
++  nav ul li,
++  div.toolbar li,
++  ul.toolbar li,
++  ul.links li {
++    display: inline;
++  }
++  
++  /* 全体の枠 */
++  div#container {
++    margin: 0 auto;
++    padding-top: 5px;
++    width: 780px;
++  }
++  
++  /* 左の枠（コンテンツを入れる） */
++  main {
++    float: left;
++    width: 530px;
++    padding: 10px 10px 10px 0;
++  }
++  
++  /* 右の枠（サイドバーを入れる） */
++  aside#sidebar {
++    float: left;
++    width: 230px;
++    background-color: #e8ffff;
++    padding: 5px;
++    font-size: 86%;
++  }
++  
++  /* ヘッダー */
++  header {
++    border-top: 4px solid #6bb;
++    padding-top: 4px;
++  }
++  
++  ul.account-menu {
++    text-align: right;
++  }
++  
++  /* フッター */
++  footer {
++    clear: both;
++    font: 11px Verdana;
++    color: #888;
++    padding: 8px 0;
++    border-top: 4px solid #6bb;
++    text-align: center;
++  }
++  
++  footer nav ul li:not(:last-child):after {
++    color: #888;
++    content: " | ";
++    margin: 0 5px;
++  }
++  
++  /* メニューバー */
++  nav.menubar {
++    padding: 2px;
++    background-color: #000;
++    color: #ccc;
++    font-size: 80%;
++    padding: 8px 16px;
++  }
++  
++  nav.menubar ul li:not(:last-child):after {
++    color: #ccc;
++    content: " | ";
++    margin: 0 2px;
++  }
++  
++  /* メニューバーのリンク */
++  nav.menubar a { text-decoration: none; }
++  
++  /* メニューバーのリンク（未訪問） */
++  nav.menubar a:link { color: #ccc; }
++  
++  /* メニューバーのリンク（訪問済） */
++  nav.menubar a:visited { color: #ccc; }
++  
++  /* メニューバーのリンク（マウスを合わせたとき） */
++  nav.menubar a:hover {
++    color: #f88;
++    text-decoration: underline;
++  }
++  
++  /* メニューバーのリンク（現在のページ） */
++  nav.menubar span {
++    color: #ff8;
++    font-weight: bold;
++  }
++  
++  /* メインコンテンツ */
++  main h1 {
++    color: #88c;
++    font-weight: normal;
++    font-size: 150%;
++    border-bottom: 2px solid #88c;
++    margin-bottom: 0.5em;
++  }
++  
++  main h2 {
++    color: #99d;
++    font-weight: bold;
++    font-size: 120%;
++    margin-bottom: 0.5em;
++    border-bottom: 1px solid #ccf;
++  }
++  
++  main p {
++    font-size: 90%;
++    line-height: 1.5;
++  }
++  
++  ul.toolbar,
++  div.toolbar {
++    padding: 15px 0;
++    font-size: 90%;
++    text-align: right;
++  }
++  
++  ul.toolbar li:not(:last-child):after {
++    color: #888;
++    content: " | ";
++    margin: 0 2px;
++  }
++  
++  /* サイドバー */
++  form#login-form {
++    font-size: 12px;
++  }
++  
++  form#login-form div {
++    padding: 2px;
++    text-align: center;
++  }
++  
++  form#login-form label {
++    display: inline-block;
++    width: 80px;
++    text-align: center;
++  }
++  
++  form#login-form input[type="text"],
++  form#login-form input[type="password"] {
++    width: 120px;
++  }
++  
++  aside#sidebar h2 {
++    color: #080;
++    font-weight: bold;
++    border-bottom: 1px dotted #080;
++    margin-bottom: 0.5em;
++    font-size: 100%;
++  }
++  
++  aside#sidebar ul {
++    padding-left: 1em;
++    list-style-type: none;
++  }
++  
++  aside#sidebar li {
++    margin-bottom: 0.3em;
++  }
++  
+\ No newline at end of file
+diff --git a/app/assets/stylesheets/flash.css b/app/assets/stylesheets/flash.css
+new file mode 100644
+index 0000000..759c932
+--- /dev/null
++++ b/app/assets/stylesheets/flash.css
+@@ -0,0 +1,5 @@
++p.notice{
++    border: 1px solid blue;
++    padding: 3px;
++    background-color: #ccf;
++}
+\ No newline at end of file
+diff --git a/app/assets/stylesheets/movie.css b/app/assets/stylesheets/movie.css
+new file mode 100644
+index 0000000..0bc5f9d
+--- /dev/null
++++ b/app/assets/stylesheets/movie.css
+@@ -0,0 +1,24 @@
++li{
++    list-style: none;
++}
++.movie_title:hover{
++    text-decoration: underline;
++}
++.movie_block {
++    padding: 0.5em 1em;
++    margin: 0.5em 0;
++    font-weight: bold;
++    border: solid 3px #000000;
++}
++
++#movie{
++    padding-inline-start:10px;
++}
++
++div p{
++    display: inline-block;
++}
++.movie_title{
++    margin-block-end: 0em;
++}
++
+diff --git a/app/assets/stylesheets/seats.css b/app/assets/stylesheets/seats.css
+new file mode 100644
+index 0000000..8ff8209
+--- /dev/null
++++ b/app/assets/stylesheets/seats.css
+@@ -0,0 +1,45 @@
++td.empty {
++    background-color: rgb(17, 212, 238);
++}
++td.reserved{
++    background-color: rgb(111, 133, 153);
++}
++
++table#front-seat{
++    margin-left: 20px;
++}
++
++div#right{
++    width:auto;
++    min-height:500px;
++    height:auto;
++    float:right;
++    margin: 0px;
++    padding-top: 100px;
++
++}
++
++div#left{
++    width:550px;
++    min-height:500px;
++    height:auto;
++    margin-top:10px;
++}
++main#main{
++    width: 780px;
++}
++
++div#right p{
++    margin-bottom: 30px;
++}
++
++div#left h2{
++    margin-bottom: 30px;
++    color: rgba(46, 179, 184, 0.589);
++    border-bottom: 1px solid rgba(46, 179, 184, 0.589);
++}
++
++
++
++
++  
+\ No newline at end of file
+diff --git a/app/assets/stylesheets/table.css b/app/assets/stylesheets/table.css
+new file mode 100644
+index 0000000..30aa6dc
+--- /dev/null
++++ b/app/assets/stylesheets/table.css
+@@ -0,0 +1,81 @@
++/* 表：一覧表示、詳細表示 */
++table.list th, table.attr th {
++  background-color: #499;
++  color: white;
++  font-weight: normal;
++  width: 150px;
++}
++
++table.list td, table.list th,
++table.attr td, table.attr th {
++  padding: 4px;
++  word-break: break-all;
++}
++
++table.list th {
++  text-align: left;
++}
++
++table.attr th {
++  text-align: right;
++
++  width: 50px;
++}
++
++table.list td, table.attr td {
++  background-color: rgba(120, 236, 226, 0.178);
++}
++
++/*ここから*/
++table.list, table.attr{
++  width: 100%;
++  border-collapse:separate;
++  border-spacing: 0;
++  font-size: 90%;
++  width: 100%;
++  table-layout: fixed;
++
++}
++
++table th:first-child{
++  border-radius: 5px 0 0 0;
++}
++
++table th:last-child{
++  border-radius: 0 5px 0 0;
++  border-right: 1px solid #3c6690;
++}
++
++table.list th, table.attr th {
++  text-align: center;
++  color:white;
++  background: linear-gradient(#829ebc,#225588);
++  border-left: 1px solid #3c6690;
++  border-top: 1px solid #3c6690;
++  border-bottom: 1px solid #3c6690;
++  box-shadow: 0px 1px 1px rgba(255,255,255,0.3) inset;
++  width: 25%;
++  padding: 10px 0;
++
++}
++
++table td{
++  border-left: 1px solid #a8b7c5;
++  border-bottom: 1px solid #a8b7c5;
++  border-top:none;
++  box-shadow: 0px -3px 5px 1px #eee inset;
++  width: auto;
++  padding: 10px 0;
++}
++
++table td:last-child{
++  border-right: 1px solid #a8b7c5;
++}
++
++table tr:last-child td:first-child {
++  border-radius: 0 0 0 5px;
++}
++
++table tr:last-child td:last-child {
++  border-radius: 0 0 5px 0;
++}
+diff --git a/app/channels/application_cable/channel.rb b/app/channels/application_cable/channel.rb
+deleted file mode 100644
+index d672697..0000000
+--- a/app/channels/application_cable/channel.rb
++++ /dev/null
+@@ -1,4 +0,0 @@
+-module ApplicationCable
+-  class Channel < ActionCable::Channel::Base
+-  end
+-end
+diff --git a/app/channels/application_cable/connection.rb b/app/channels/application_cable/connection.rb
+deleted file mode 100644
+index 0ff5442..0000000
+--- a/app/channels/application_cable/connection.rb
++++ /dev/null
+@@ -1,4 +0,0 @@
+-module ApplicationCable
+-  class Connection < ActionCable::Connection::Base
+-  end
+-end
+diff --git a/app/controllers/.DS_Store b/app/controllers/.DS_Store
+new file mode 100644
+index 0000000..2df903f
+Binary files /dev/null and b/app/controllers/.DS_Store differ
+diff --git a/app/controllers/accounts_controller.rb b/app/controllers/accounts_controller.rb
+new file mode 100644
+index 0000000..a00eb5b
+--- /dev/null
++++ b/app/controllers/accounts_controller.rb
+@@ -0,0 +1,55 @@
++class AccountsController < ApplicationController
++  before_action :login_required, except: [:new,:create]
++
++  layout 'reservations.html.erb'
++
++  def new
++    @member = Member.new()
++  end
++
++  def show
++    @member = current_member
++  end
++
++  def edit
++    @member = current_member
++  end
++
++  def create
++    @member = Member.new(params[:member])
++    if @member.save
++      session[:member_id] = @member.id
++      redirect_to account_path, notice: "会員登録しました"
++    end
++  end
++
++  def update
++    @member = current_member
++    @member.assign_attributes(params[:account])
++    if @member.save
++      redirect_to :account, notice: "アカウント情報を更新しました。"
++    else
++      render "edit"
++    end
++  end
++
++  def destroy
++    @member = current_member.destroy
++    session.delete(:member_id)
++    redirect_to "/", notice: "会員を削除しました。"
++  end
++  
++end
++
++
++private def account_params
++  params.require(:account).permit(
++    :number,
++    :name,
++    :full_name,
++    :gender,
++    :birthday,
++    :email
++  )
++end
++
+diff --git a/app/controllers/admin/accounts_controller.rb b/app/controllers/admin/accounts_controller.rb
+new file mode 100644
+index 0000000..a62fe98
+--- /dev/null
++++ b/app/controllers/admin/accounts_controller.rb
+@@ -0,0 +1,33 @@
++class AccountsController < ApplicationController
++  before_action :login_required
++
++  def show
++    @member = current_member
++  end
++
++  def edit
++    @member = current_member
++  end
++
++  def update
++    @member = current_member
++    @member.assign_attributes(params[:account])
++    if @member.save
++      redirect_to :account, notice: "アカウント情報を更新しました。"
++    else
++      render "edit"
++    end
++  end
++end
++
++private def account_params
++  params.require(:account).permit(
++    :number,
++    :name,
++    :full_name,
++    :gender,
++    :birthday,
++    :email
++  )
++end
++
+diff --git a/app/controllers/admin/base.rb b/app/controllers/admin/base.rb
+new file mode 100644
+index 0000000..daaef41
+--- /dev/null
++++ b/app/controllers/admin/base.rb
+@@ -0,0 +1,7 @@
++class Admin::Base < ApplicationController
++    before_action :admin_login_required
++
++    private def admin_login_required
++        raise Forbidden unless current_member&.administrator?
++    end
++end
+\ No newline at end of file
+diff --git a/app/controllers/admin/members_controller.rb b/app/controllers/admin/members_controller.rb
+new file mode 100644
+index 0000000..071ae75
+--- /dev/null
++++ b/app/controllers/admin/members_controller.rb
+@@ -0,0 +1,42 @@
++class Admin::MembersController < Admin::Base
++    def index
++        @members = Member.all
++    end
++
++    def new
++        @member = Member.new(birthday: Date.new(1980, 1, 1))
++    end
++
++    def edit
++        @member = Member.find(params[:id])
++    end
++
++    def show
++        @member = Member.find(params[:id])
++    end
++
++    def create
++        @member = Member.new(params[:member])
++        if @member.save
++            redirect_to [:admin,@member], notice: "会員登録しました。"
++        else
++            render "new"
++        end
++    end
++
++    def update
++        @member = Member.find(params[:id])
++        @member.assign_attributes(params[:member])
++        if @member.save
++            redirect_to [:admin,@member], notice: "会員情報を更新しました。"
++        else
++            render "edit"
++        end
++    end
++
++    def destroy
++        @member = Member.find(params[:id])
++        @member.destroy
++        redirect_to :admin_members, notice: "会員名：#{@member.user_name}を削除しました。"
++    end
++end
+diff --git a/app/controllers/admin/movies_controller.rb b/app/controllers/admin/movies_controller.rb
+new file mode 100644
+index 0000000..168569b
+--- /dev/null
++++ b/app/controllers/admin/movies_controller.rb
+@@ -0,0 +1,48 @@
++class Admin::MoviesController < Admin::Base
++    def index
++        @movies = Movie.where(finished: 0)
++    end
++
++    def finished
++        @movies = Movie.where(finished: 1)
++    end
++
++    def search
++        @movies = Movie.search(params[:title])
++    end
++
++    def show
++        @movie = Movie.find(params[:id])
++    end
++
++    def new
++        @movie = Movie.new()
++    end
++
++    def edit
++        @movie = Movie.find_by(id: params[:id])
++    end
++
++    def create
++        @movie = Movie.new(params[:movie])
++        if @movie.save
++            redirect_to [:admin,@movie]
++        else
++            render "new"
++        end
++    end
++
++    def update
++        @movie = Movie.find_by(id: params[:id])
++        @movie.assign_attributes(params[:movie])
++        if @movie.save
++        redirect_to :admin_movie, notice: "映画情報を更新しました。"
++        else
++        render "edit"
++        end
++  end
++
++
++    def destroy
++    end
++end
+diff --git a/app/controllers/admin/passwords_controller.rb b/app/controllers/admin/passwords_controller.rb
+new file mode 100644
+index 0000000..390d5f7
+--- /dev/null
++++ b/app/controllers/admin/passwords_controller.rb
+@@ -0,0 +1,33 @@
++class PasswordsController < ApplicationController
++  before_action :login_required
++
++  def show
++    redirect_to :account
++  end
++
++  def edit
++    @member = current_member
++  end
++
++  def update
++    @member = current_member
++    current_password = params[:account][:current_password]
++
++    if current_password.present?
++      if @member.authenticate(current_password)
++        @member.assign_attributes(params[:account])
++        if @member.save
++          redirect_to :account, notice: "パスワードを変更しました。"
++        else
++          render "edit"
++        end
++      else
++        @member.errors.add(:current_password, :wrong)
++        render "edit"
++      end
++    else
++      @member.errors.add(:current_password, :empty)
++      render "edit"
++    end
++  end
++end
+diff --git a/app/controllers/admin/performances_controller.rb b/app/controllers/admin/performances_controller.rb
+new file mode 100644
+index 0000000..12b4ddb
+--- /dev/null
++++ b/app/controllers/admin/performances_controller.rb
+@@ -0,0 +1,34 @@
++class Admin::PerformancesController < Admin::Base
++  require'date'
++  def index
++    @performances = Performance.where(movie_id: params[:movie_id]).order(:screening_date).order(:start_time)
++    @performance = Performance.new(movie_id: params[:id])
++  end
++
++  def create
++    @performance = Performance.new(performance_params)
++    @movie = Movie.find_by(id: params[:movie_id])
++    @performance[:end_time] = @performance.start_time + @movie.running_time.minute
++    @performance.movie = @movie
++    if @performance.save!
++      redirect_to admin_movie_performances_url, notice: "登録しました"
++    else
++      redirect_to admin_movie_performances_url
++    end
++    # hash= params[:performance]
++    # hash["movie_id"] = params[:id]
++    #   @performance = Performance.create(hash)
++    #   redirect_to movie_performances_url
++    #   logger.debug @performance.errors.inspect 
++  end
++
++    def destroy
++      @performance = Performance.find(params[:id])
++      @performance.destroy
++      redirect_to admin_movie_performances_path
++    end
++
++    private def performance_params
++      params.require(:performance)
++    end
++end
+diff --git a/app/controllers/admin/reservations_controller.rb b/app/controllers/admin/reservations_controller.rb
+new file mode 100644
+index 0000000..c0988fc
+--- /dev/null
++++ b/app/controllers/admin/reservations_controller.rb
+@@ -0,0 +1,55 @@
++class Admin::ReservationsController < Admin::Base
++  layout 'reservations.html.erb'
++  def index
++    @reservations = Reservation.order(created_at: :desc)
++  end
++
++  def show
++    check
++    @kind = @reservation.kind
++  end
++
++  def new
++    check
++    @reservation = Reservation.new()
++  end
++
++  def create
++    @performance = Performance.find_by(id: params[:performance_id])
++    @seat = Seat.find_by(id: params[:seat_id])
++    @performance_seat = PerformanceSeat.new(performance_id: params[:performance_id],seat_id: params[:seat_id])
++    if @performance_seat.save
++      @reservation = Reservation.new(performance_id: params[:performance_id],
++                                    kind_id: params[:reservation][:kind_id])
++      @reservation.seats << @seat
++      @reservation.member = current_member
++      if @reservation.save
++        redirect_to movie_performance_seat_reservation_path(id: @reservation.id)
++      else
++        redirect_to movie_performance_seats_path, notice: "失敗しました。"
++      end
++    else
++      redirect_to movie_performance_seats_path, notice: "既に予約されています。"
++    end
++
++  end
++
++  # def desteoy
++  #   @reservation = Reservation.find(params[:id])
++  #   @reservation.destroy
++  #   redirect_to admin_movie_performances_path
++  # end
++end
++
++def check
++  @reservation = Reservation.find_by(id:params[:id])
++  @seat = Seat.find_by(id:params[:seat_id])
++  @performance = Performance.find_by(id:params[:performance_id])
++  @movie = Movie.find_by(id:params[:movie_id])
++end
++
++
++# private def seat_params
++#   params[:performance_seat][:seat_id]
++# end
++
+diff --git a/app/controllers/admin/seats_controller.rb b/app/controllers/admin/seats_controller.rb
+new file mode 100644
+index 0000000..335e0b8
+--- /dev/null
++++ b/app/controllers/admin/seats_controller.rb
+@@ -0,0 +1,7 @@
++class SeatsController < ApplicationController
++    layout 'reservations.html.erb'
++
++    def index
++        @reserved = PerformanceSeat.where(performance_id: params[:performance_id])
++    end    
++end
+diff --git a/app/controllers/admin/sessions_controller.rb b/app/controllers/admin/sessions_controller.rb
+new file mode 100644
+index 0000000..f7fccd1
+--- /dev/null
++++ b/app/controllers/admin/sessions_controller.rb
+@@ -0,0 +1,16 @@
++class SessionsController < ApplicationController
++    def create
++        member = Member.find_by(user_name: params[:user_name])
++        if member&.authenticate(params[:password])
++            session[:member_id] = member.id
++        else
++            flash.alert = "名前とパスワードが一致しません"
++        end
++        redirect_to "/"
++    end
++
++    def destroy
++        session.delete(:member_id)
++        redirect_to "/"
++    end
++end
+diff --git a/app/controllers/application_controller.rb b/app/controllers/application_controller.rb
+index 09705d1..a5faac0 100644
+--- a/app/controllers/application_controller.rb
++++ b/app/controllers/application_controller.rb
+@@ -1,2 +1,49 @@
+ class ApplicationController < ActionController::Base
++  private def current_member
++      Member.find_by(id: session[:member_id]) if session[:member_id]
++  end
++  helper_method :current_member
++
++  class LoginRequired < StandardError; end
++  class Forbidden < StandardError; end
++
++  if Rails.env.production? || ENV["RESCUE_EXCEPTIONS"]
++      rescue_from StandardError, with: :rescue_internal_server_error
++      rescue_from ActiveRecord::RecordNotFound, with: :rescue_not_found
++      rescue_from ActionController::ParameterMissing, with: :rescue_bad_request
++    end
++  
++    rescue_from LoginRequired, with: :rescue_login_required
++    rescue_from Forbidden, with: :rescue_forbidden
++  
++
++  private def login_required
++      raise LoginRquired unless current_member
++  end
++
++  private def rescue_bad_request(exception)
++      render "errors/bad_request", status: 400, layout: "error",
++        formats: [:html]
++    end
++  
++    private def rescue_login_required(exception)
++      render "errors/login_required", status: 403, layout: "error",
++        formats: [:html]
++    end
++  
++    private def rescue_forbidden(exception)
++      render "errors/forbidden", status: 403, layout: "error",
++        formats: [:html]
++    end
++  
++    private def rescue_not_found(exception)
++      render "errors/not_found", status: 404, layout: "error",
++        formats: [:html]
++    end
++  
++    private def rescue_internal_server_error(exception)
++      render "errors/internal_server_error", status: 500, layout: "error",
++        formats: [:html]
++    end
++    
+ end
+diff --git a/app/controllers/errors_controller.rb b/app/controllers/errors_controller.rb
+new file mode 100644
+index 0000000..eaab01d
+--- /dev/null
++++ b/app/controllers/errors_controller.rb
+@@ -0,0 +1,13 @@
++class ErrorsController < ActionController::Base
++    layout "error"
++  
++    def show
++      case request.env["action_dispatch.exception"]
++      when ActionController::RoutingError
++        render "not_found", status: 404, formats: [:html]
++      else
++        render "internal_server_error", status: 500, formats: [:html]
++      end
++    end
++  end
++  
+\ No newline at end of file
+diff --git a/app/controllers/members_controller.rb b/app/controllers/members_controller.rb
+new file mode 100644
+index 0000000..074d0b6
+--- /dev/null
++++ b/app/controllers/members_controller.rb
+@@ -0,0 +1,33 @@
++class MembersController < ApplicationController
++    def index
++        @members = Member.all
++    end
++
++    def new
++        @member = Member.new(birthday: Date.new(1980, 1, 1))
++    end
++
++    def edit
++        @member = Member.find(params[:id])
++    end
++
++    def show
++        @member = Member.find(params[:id])
++    end
++
++    def create
++        @member = Member.new(params[:member])
++        if @member.save
++            session[:member_id] = @member.id
++            redirect_to account_path, notice: "会員登録しました。"
++        else
++            render "new"
++        end
++    end
++
++    def destroy
++        @member = Member.find(params[:id])
++        @member.destroy
++        redirect_to :members, notice: "会員名：#{@member.user_name}を削除しました。"
++    end
++end
+diff --git a/app/controllers/movies_controller.rb b/app/controllers/movies_controller.rb
+new file mode 100644
+index 0000000..5d59f8b
+--- /dev/null
++++ b/app/controllers/movies_controller.rb
+@@ -0,0 +1,29 @@
++class MoviesController < ApplicationController
++    def index
++        @movies = Movie.where(finished: 0)
++        @performances =Performance.all
++
++    end
++
++    def search
++        @movies = Movie.where(finished: 0).search(params[:title])
++        @performances =Performance.where(screening_date: params[:screening_date])
++    end
++
++    def show
++        @movie = Movie.find(params[:id])
++    end
++
++    def bad_request
++        raise ActionController::ParameterMissing, ""
++      end
++    
++      def forbidden
++        raise Forbidden, ""
++      end
++    
++      def internal_server_error
++        raise
++      end
++    
++end
+diff --git a/app/controllers/passwords_controller.rb b/app/controllers/passwords_controller.rb
+new file mode 100644
+index 0000000..390d5f7
+--- /dev/null
++++ b/app/controllers/passwords_controller.rb
+@@ -0,0 +1,33 @@
++class PasswordsController < ApplicationController
++  before_action :login_required
++
++  def show
++    redirect_to :account
++  end
++
++  def edit
++    @member = current_member
++  end
++
++  def update
++    @member = current_member
++    current_password = params[:account][:current_password]
++
++    if current_password.present?
++      if @member.authenticate(current_password)
++        @member.assign_attributes(params[:account])
++        if @member.save
++          redirect_to :account, notice: "パスワードを変更しました。"
++        else
++          render "edit"
++        end
++      else
++        @member.errors.add(:current_password, :wrong)
++        render "edit"
++      end
++    else
++      @member.errors.add(:current_password, :empty)
++      render "edit"
++    end
++  end
++end
+diff --git a/app/controllers/reservations_controller.rb b/app/controllers/reservations_controller.rb
+new file mode 100644
+index 0000000..415e4ba
+--- /dev/null
++++ b/app/controllers/reservations_controller.rb
+@@ -0,0 +1,51 @@
++class ReservationsController < ApplicationController
++  before_action :login_required
++
++  layout 'reservations.html.erb'
++  def index
++    @reservations = Reservation.where(member_id: current_member.id).order(created_at: :desc)
++  end
++
++  def show
++    check
++    @kind = @reservation.kind
++  end
++
++  def new
++    check
++    @reservation = Reservation.new()
++  end
++
++  def create
++    @performance = Performance.find_by(id: params[:performance_id])
++    @seat = Seat.find_by(id: params[:seat_id])
++    @performance_seat = PerformanceSeat.new(performance_id: params[:performance_id],seat_id: params[:seat_id])
++    if @performance_seat.save
++      @reservation = Reservation.new(performance_id: params[:performance_id],
++                                    kind_id: params[:reservation][:kind_id])
++      @reservation.seats << @seat
++      @reservation.member = current_member
++      if @reservation.save
++        redirect_to movie_performance_seat_reservation_path(id: @reservation.id)
++      else
++        redirect_to movie_performance_seats_path, notice: "失敗しました。"
++      end
++    else
++      redirect_to movie_performance_seats_path, notice: "既に予約されています。"
++    end
++
++  end
++end
++
++def check
++  @reservation = Reservation.find_by(id:params[:id])
++  @seat = Seat.find_by(id:params[:seat_id])
++  @performance = Performance.find_by(id:params[:performance_id])
++  @movie = Movie.find_by(id:params[:movie_id])
++end
++
++
++# private def seat_params
++#   params[:performance_seat][:seat_id]
++# end
++
+diff --git a/app/controllers/seats_controller.rb b/app/controllers/seats_controller.rb
+new file mode 100644
+index 0000000..335e0b8
+--- /dev/null
++++ b/app/controllers/seats_controller.rb
+@@ -0,0 +1,7 @@
++class SeatsController < ApplicationController
++    layout 'reservations.html.erb'
++
++    def index
++        @reserved = PerformanceSeat.where(performance_id: params[:performance_id])
++    end    
++end
+diff --git a/app/controllers/sessions_controller.rb b/app/controllers/sessions_controller.rb
+new file mode 100644
+index 0000000..f7fccd1
+--- /dev/null
++++ b/app/controllers/sessions_controller.rb
+@@ -0,0 +1,16 @@
++class SessionsController < ApplicationController
++    def create
++        member = Member.find_by(user_name: params[:user_name])
++        if member&.authenticate(params[:password])
++            session[:member_id] = member.id
++        else
++            flash.alert = "名前とパスワードが一致しません"
++        end
++        redirect_to "/"
++    end
++
++    def destroy
++        session.delete(:member_id)
++        redirect_to "/"
++    end
++end
+diff --git a/app/helpers/application_helper.rb b/app/helpers/application_helper.rb
+index de6be79..d946480 100644
+--- a/app/helpers/application_helper.rb
++++ b/app/helpers/application_helper.rb
+@@ -1,2 +1,17 @@
+ module ApplicationHelper
++  def page_title
++    title = "popcorn"
++    title = @page_title + " - " + title if @page_title
++    title
++  end
++
++  def menu_link_to(text, path, options = {})
++    content_tag :li do
++      condition = options[:method] || !current_page?(path)
++      
++      link_to_if(condition, text, path, options) do
++        content_tag(:span, text)
++      end
++    end
++  end
+ end
+diff --git a/app/mailers/application_mailer.rb b/app/mailers/application_mailer.rb
+deleted file mode 100644
+index 286b223..0000000
+--- a/app/mailers/application_mailer.rb
++++ /dev/null
+@@ -1,4 +0,0 @@
+-class ApplicationMailer < ActionMailer::Base
+-  default from: 'from@example.com'
+-  layout 'mailer'
+-end
+diff --git a/app/models/kind.rb b/app/models/kind.rb
+new file mode 100644
+index 0000000..cd2ba85
+--- /dev/null
++++ b/app/models/kind.rb
+@@ -0,0 +1,3 @@
++class Kind < ApplicationRecord
++    has_many :reservations
++end
+diff --git a/app/models/member.rb b/app/models/member.rb
+new file mode 100644
+index 0000000..7a702d1
+--- /dev/null
++++ b/app/models/member.rb
+@@ -0,0 +1,13 @@
++class Member < ApplicationRecord
++    has_secure_password
++
++    has_many :reservations, dependent: :destroy
++    
++    validates :user_name, :full_name, presence: true
++    validates :email, email: { allow_blank: true }
++    validates :credit_number, :authentication_number, numericality: {only_integer: true}
++
++    attr_accessor :current_password
++    validates :password, presence: { if: :current_password}
++
++end
+diff --git a/app/models/movie.rb b/app/models/movie.rb
+new file mode 100644
+index 0000000..6e4f264
+--- /dev/null
++++ b/app/models/movie.rb
+@@ -0,0 +1,22 @@
++class Movie < ApplicationRecord
++    has_many :performances, dependent: :destroy
++
++    validates :title, :story, :release_date, :running_time, 
++                :distribution, :director, :actor, presence: true
++
++    validates :title,:distribution,:director, length: { maximum: 50 }
++    validates :running_time, numericality: {only_integer: true, greater_than_or_equal_to: 0}
++
++
++
++    class << self
++        def search(query)
++            movies = Movie.where(finished: 0)
++            if query.present?
++                movies.where(["title LIKE ?","%#{query}%"])
++            else
++                movies
++            end
++        end
++    end
++end
+diff --git a/app/models/performance.rb b/app/models/performance.rb
+new file mode 100644
+index 0000000..e3fb6cc
+--- /dev/null
++++ b/app/models/performance.rb
+@@ -0,0 +1,6 @@
++class Performance < ApplicationRecord
++    belongs_to :movie
++    has_many :reservations, dependent: :destroy
++    has_many :performance_seats, dependent: :destroy
++    has_many :seats, through: :performance_seats
++end
+diff --git a/app/models/performance_seat.rb b/app/models/performance_seat.rb
+new file mode 100644
+index 0000000..973752a
+--- /dev/null
++++ b/app/models/performance_seat.rb
+@@ -0,0 +1,7 @@
++class PerformanceSeat < ApplicationRecord
++    belongs_to :performance
++    belongs_to :seat
++
++    validates :seat_id, uniqueness: { scope: :performance_id }
++
++end
+diff --git a/app/models/reservation.rb b/app/models/reservation.rb
+new file mode 100644
+index 0000000..e8e93cb
+--- /dev/null
++++ b/app/models/reservation.rb
+@@ -0,0 +1,9 @@
++class Reservation < ApplicationRecord
++    has_many :reservation_seats, dependent: :destroy
++    has_many :seats, through: :reservation_seats
++    
++    belongs_to :performance
++    belongs_to :member
++    belongs_to :kind
++
++end
+diff --git a/app/models/reservation_seat.rb b/app/models/reservation_seat.rb
+new file mode 100644
+index 0000000..a3d0a2a
+--- /dev/null
++++ b/app/models/reservation_seat.rb
+@@ -0,0 +1,5 @@
++class ReservationSeat < ApplicationRecord
++    belongs_to :reservation
++    belongs_to :seat
++
++end
+diff --git a/app/models/seat.rb b/app/models/seat.rb
+new file mode 100644
+index 0000000..f34a11d
+--- /dev/null
++++ b/app/models/seat.rb
+@@ -0,0 +1,6 @@
++class Seat < ApplicationRecord
++    has_many :reservation_seats, dependent: :destroy
++    has_many :reservations, through: :reservation_seats
++    has_many :performance_seats, dependent: :destroy
++    has_many :performances, through: :performance_seats
++end
+diff --git a/app/views/.DS_Store b/app/views/.DS_Store
+new file mode 100644
+index 0000000..f33a1df
+Binary files /dev/null and b/app/views/.DS_Store differ
+diff --git a/app/views/accounts/_body.html.erb b/app/views/accounts/_body.html.erb
+new file mode 100644
+index 0000000..c96b18f
+--- /dev/null
++++ b/app/views/accounts/_body.html.erb
+@@ -0,0 +1,26 @@
++<table class="attr">
++  <tr>
++    <th>ユーザー名</th>
++    <td><%= @member.user_name %></td>
++  </tr>
++  <tr>
++    <th>氏名</th>
++    <td><%= @member.full_name %></td>
++  </tr>
++  <tr>
++    <th>性別</th>
++    <td><%= @member.sex == 1 ? "男" : "女" %></td>
++  </tr>
++  <tr>
++    <th>誕生日</th>
++    <td><%= @member.birthday&.strftime("%Y年%m月%d日") %></td>
++  </tr>
++  <tr>
++    <th>メールアドレス</th>
++    <td><%= @member.email %></td>
++  </tr>
++  <tr>
++    <th>管理者</th>
++    <td><%= @member.administrator? ? "○" : "－" %></td>
++  </tr>
++</table>
+diff --git a/app/views/accounts/edit.html.erb b/app/views/accounts/edit.html.erb
+new file mode 100644
+index 0000000..0bfe2ec
+--- /dev/null
++++ b/app/views/accounts/edit.html.erb
+@@ -0,0 +1,10 @@
++<% @page_title = "アカウント情報の編集" %>
++
++<h1><%= @page_title %></h1>
++
++<div class="toolbar"><%= link_to "マイアカウントに戻る", :account %></div>
++
++<%= form_for @member, as: "account", url: :account do |form| %>
++    <%= render "shared/member_form", form: form %>
++    <div><%= form.submit %></div>
++<% end %>
+\ No newline at end of file
+diff --git a/app/views/accounts/show.html.erb b/app/views/accounts/show.html.erb
+new file mode 100644
+index 0000000..5208fae
+--- /dev/null
++++ b/app/views/accounts/show.html.erb
+@@ -0,0 +1,13 @@
++<% @page_title = "マイアカウント" %>
++
++<h1><%= @pagetitle %></h1>
++
++<ul class="toolbar">
++    <%= menu_link_to "あなたの予約一覧", reservations_path %>
++    <%= menu_link_to "アカウント情報の編集", :edit_account %>
++    <%= menu_link_to "パスワードの変更", :edit_password %>
++    <%= link_to "アカウント情報の削除", :account, method: :delete,
++            data: {confirm: "本当に削除しますか？"} unless current_member&.administrator? %>
++</ul>
++
++<%= render "accounts/body" %>
+\ No newline at end of file
+diff --git a/app/views/admin/.DS_Store b/app/views/admin/.DS_Store
+new file mode 100644
+index 0000000..6858279
+Binary files /dev/null and b/app/views/admin/.DS_Store differ
+diff --git a/app/views/admin/accounts/edit.html.erb b/app/views/admin/accounts/edit.html.erb
+new file mode 100644
+index 0000000..0bfe2ec
+--- /dev/null
++++ b/app/views/admin/accounts/edit.html.erb
+@@ -0,0 +1,10 @@
++<% @page_title = "アカウント情報の編集" %>
++
++<h1><%= @page_title %></h1>
++
++<div class="toolbar"><%= link_to "マイアカウントに戻る", :account %></div>
++
++<%= form_for @member, as: "account", url: :account do |form| %>
++    <%= render "shared/member_form", form: form %>
++    <div><%= form.submit %></div>
++<% end %>
+\ No newline at end of file
+diff --git a/app/views/admin/accounts/show.html.erb b/app/views/admin/accounts/show.html.erb
+new file mode 100644
+index 0000000..f546720
+--- /dev/null
++++ b/app/views/admin/accounts/show.html.erb
+@@ -0,0 +1,11 @@
++<% @page_title = "マイアカウント" %>
++
++<h1><%= @pagetitle %></h1>
++
++<ul class="toolbar">
++    <%= menu_link_to "あなたの予約一覧", reservations_path %>
++    <%= menu_link_to "アカウント情報の編集", :edit_account %>
++    <%= menu_link_to "パスワードの変更", :edit_password %>
++</ul>
++
++<%= render "members/body" %>
+\ No newline at end of file
+diff --git a/app/views/admin/members/_body.html.erb b/app/views/admin/members/_body.html.erb
+new file mode 100644
+index 0000000..c96b18f
+--- /dev/null
++++ b/app/views/admin/members/_body.html.erb
+@@ -0,0 +1,26 @@
++<table class="attr">
++  <tr>
++    <th>ユーザー名</th>
++    <td><%= @member.user_name %></td>
++  </tr>
++  <tr>
++    <th>氏名</th>
++    <td><%= @member.full_name %></td>
++  </tr>
++  <tr>
++    <th>性別</th>
++    <td><%= @member.sex == 1 ? "男" : "女" %></td>
++  </tr>
++  <tr>
++    <th>誕生日</th>
++    <td><%= @member.birthday&.strftime("%Y年%m月%d日") %></td>
++  </tr>
++  <tr>
++    <th>メールアドレス</th>
++    <td><%= @member.email %></td>
++  </tr>
++  <tr>
++    <th>管理者</th>
++    <td><%= @member.administrator? ? "○" : "－" %></td>
++  </tr>
++</table>
+diff --git a/app/views/admin/members/edit.html.erb b/app/views/admin/members/edit.html.erb
+new file mode 100644
+index 0000000..be507fc
+--- /dev/null
++++ b/app/views/admin/members/edit.html.erb
+@@ -0,0 +1,9 @@
++<% @page_title = "会員情報の編集" %>
++
++<h1><%= @page_title %></h1>
++<div class="toolbar"><%= link_to "会員の詳細に戻る", [:admin, @member] %></div>
++
++<%= form_for [:admin, @member] do |form| %>
++    <%= render "shared/member_form", form: form %>
++    <div><%= form.submit %></div>
++<% end %>
+\ No newline at end of file
+diff --git a/app/views/admin/members/index.html.erb b/app/views/admin/members/index.html.erb
+new file mode 100644
+index 0000000..c985c39
+--- /dev/null
++++ b/app/views/admin/members/index.html.erb
+@@ -0,0 +1,31 @@
++<% @page_title = "会員名簿" %>
++<h1><%= @page_title %></h1>
++
++<div class="toolbar"><%= link_to "会員の新規登録", :new_admin_member %></div>
++
++<% if @members.present? %>
++    <table class ="list">
++        <thead>
++            <tr>
++                <th>ユーザ名</th>
++                <th>氏名</th>
++                <th>操作</th>
++            </tr>
++        </thead>
++        <tbody>
++            <% @members.each do |member| %>
++                <tr>
++                    <td><%= member.user_name %></td>
++                    <td><%= link_to member.full_name, [:admin, member] %></td>
++                    <td>
++                        <%= link_to "編集", [:edit, :admin, member] %>
++                        <%= link_to "削除", [:admin,member], method: :delete,
++                                data: {confirm: "本当に削除しますか？"} unless member&.administrator? %>
++                    </td>
++                </tr>
++            <% end %>
++        </tbody>
++    </table>
++<% else %>
++    <p>会員情報がありません。</p>
++<% end %>
+\ No newline at end of file
+diff --git a/app/views/admin/members/new.html.erb b/app/views/admin/members/new.html.erb
+new file mode 100644
+index 0000000..9ec7eac
+--- /dev/null
++++ b/app/views/admin/members/new.html.erb
+@@ -0,0 +1,9 @@
++<% @page_title = "会員の新規登録" %>
++
++<h1><%= @page_title %></h1>
++
++<%= form_for [:admin, @member] do |form| %>
++    <%= render "shared/member_form", form: form %>
++    <div><%= form.submit %></div>
++
++<% end %>
+\ No newline at end of file
+diff --git a/app/views/admin/members/show.html.erb b/app/views/admin/members/show.html.erb
+new file mode 100644
+index 0000000..c7b4725
+--- /dev/null
++++ b/app/views/admin/members/show.html.erb
+@@ -0,0 +1,7 @@
++<% @page_title = "会員の詳細" %>
++
++<h1><%= @page_title %></h1>
++
++<div class="toolbar"><%= link_to "編集", [:edit, :admin, @member] %></div>
++
++<%= render "body" %>
+\ No newline at end of file
+diff --git a/app/views/admin/movies/_body.html.erb b/app/views/admin/movies/_body.html.erb
+new file mode 100644
+index 0000000..33c4a8e
+--- /dev/null
++++ b/app/views/admin/movies/_body.html.erb
+@@ -0,0 +1,36 @@
++<table class="attr">
++
++  <tr>
++    <th>タイトル</th>
++    <td><%= @movie.title %></td>
++  </tr>
++  <tr>
++    <th>ストーリー</th>
++    <td><%= @movie.story %></td>
++  </tr>
++  <tr>
++    <th>公開日</th>
++    <td><%= @movie.release_date.strftime("%Y/%m/%d") %></td>
++  </tr>
++  <tr>
++    <th>上映時間</th>
++    <td><%= @movie.running_time %></td>
++  </tr>
++  <tr>
++    <th>配給</th>
++    <td><%= @movie.distribution %></td>
++  </tr>
++  <tr>
++    <th>監督</th>
++    <td><%= @movie.director%></td>
++  </tr>
++  <tr>
++    <th>俳優</th>
++    <td><%= @movie.actor%></td>
++  </tr>
++    <tr>
++    <th>状態</th>
++    <td><%= @movie.finished == 0 ? "詳細公開中" : "公開終了" %></td>
++  </tr>
++
++</table>
+diff --git a/app/views/admin/movies/edit.html.erb b/app/views/admin/movies/edit.html.erb
+new file mode 100644
+index 0000000..aa9ff62
+--- /dev/null
++++ b/app/views/admin/movies/edit.html.erb
+@@ -0,0 +1,8 @@
++<% @page_title = "#{@movie.title}の編集" %>
++
++<h1><%= @page_title %></h1>
++
++<%= form_for [:admin,@movie] do |form| %>
++    <%= render "shared/movie_form", form: form %>
++    <div><%= form.submit %></div>
++<% end %>
+\ No newline at end of file
+diff --git a/app/views/admin/movies/finished.html.erb b/app/views/admin/movies/finished.html.erb
+new file mode 100644
+index 0000000..200e5a9
+--- /dev/null
++++ b/app/views/admin/movies/finished.html.erb
+@@ -0,0 +1,19 @@
++<% @page_title = "映画一覧" %>
++<h1><%= @page_title %></h1>
++<table class="list">
++    <ul id="movie">
++        <% @movies.each do |movie| %>
++            <div class="movie_block">
++                <li>
++                    <h3 class="movie_title"><%= link_to movie.title, movie_path(id: movie.id) %>
++                        <p><%= link_to "スケジュール編集", admin_movie_performances_path(movie_id: movie.id) %></p>
++                    </h3>
++                    <% movie.performances.each do |pf| %>
++                        <p style="color: blue"><%= pf.screening_date.strftime("%m/%d") %></p>
++                        <p><%= pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M") %>
++                    <% end %>
++                </li>
++            </div>
++        <% end %>
++    </ul>
++</table>
+\ No newline at end of file
+diff --git a/app/views/admin/movies/index.html.erb b/app/views/admin/movies/index.html.erb
+new file mode 100644
+index 0000000..a8e9242
+--- /dev/null
++++ b/app/views/admin/movies/index.html.erb
+@@ -0,0 +1,28 @@
++<% @page_title = "映画一覧" %>
++<h1><%= @page_title %><%= "※ログインすると予約できます" unless current_member %></h1>
++<p>検索</p>
++<%= form_tag(search_admin_movies_path,:method => 'get') do %>
++  <%= text_field_tag "title" %>
++  <% today = Date.today%>
++  <% day=[today.strftime("%Y-%m-%d"),(today+1).strftime("%Y-%m-%d"),(today+2).strftime("%Y-%m-%d"),(today+3).strftime("%Y-%m-%d"),(today+4).strftime("%Y-%m-%d")]  %>
++  <%= select_tag "screening_date", options_for_select({"日付指定": nil,"#{day[0]}": day[0],"#{day[1]}": day[1],
++                                                        "#{day[2]}": day[2],"#{day[3]}": day[3],"#{day[4]}": day[4]}) %>
++  <%= submit_tag 'Search', :name => nil %>
++<% end %>
++<table class="list">
++    <ul id="movie">
++        <% @movies.each do |movie| %>
++            <div class="movie_block">
++                <li>
++                    <h3 class="movie_title"><%= link_to movie.title, admin_movie_path(id: movie.id) %>
++                        <p><%= link_to "スケジュール編集", admin_movie_performances_path(movie_id: movie.id) %></p>
++                    </h3>
++                    <% movie.performances.order(:screening_date).each do |pf| %>
++                            <p style="color: blue"><%= pf.screening_date.strftime("%m/%d") %></p>
++                            <p><%= pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M") %>
++                    <% end %>
++                </li>
++            </div>
++        <% end %>
++    </ul>
++</table>
+\ No newline at end of file
+diff --git a/app/views/admin/movies/new.html.erb b/app/views/admin/movies/new.html.erb
+new file mode 100644
+index 0000000..65091f4
+--- /dev/null
++++ b/app/views/admin/movies/new.html.erb
+@@ -0,0 +1,9 @@
++<% @page_title = "映画の新規登録" %>
++
++<h1><%= @page_title %></h1>
++
++<%= form_for [:admin,@movie] do |form| %>
++    <%= render "shared/movie_form", form: form %>
++    <div><%= form.submit %></div>
++    
++<% end %>
+\ No newline at end of file
+diff --git a/app/views/admin/movies/search.html.erb b/app/views/admin/movies/search.html.erb
+new file mode 100644
+index 0000000..682871a
+--- /dev/null
++++ b/app/views/admin/movies/search.html.erb
+@@ -0,0 +1,39 @@
++<% @page_title = "検索結果" %>
++<h1><%= @page_title %><%= "※ログインすると予約できます" unless current_member %></h1>
++<p>検索</p>
++<%= form_tag(search_admin_movies_path,:method => 'get') do %>
++  <%= text_field_tag "title" %>
++  <% today = Date.today%>
++  <% day=[today.strftime("%Y-%m-%d"),(today+1).strftime("%Y-%m-%d"),(today+2).strftime("%Y-%m-%d"),(today+3).strftime("%Y-%m-%d"),(today+4).strftime("%Y-%m-%d")]  %>
++  <%= select_tag "screening_date", options_for_select({"日付指定": nil,"#{day[0]}": day[0],"#{day[1]}": day[1],
++                                                        "#{day[2]}": day[2],"#{day[3]}": day[3],"#{day[4]}": day[4]}) %>
++  <%= submit_tag 'Search', :name => nil %>
++<% end %>
++<table class="list">
++    <ul id="movie">
++        <% @movies.each do |movie| %>
++            <div class="movie_block">
++                <li>
++                    <h3 class="movie_title"><%= link_to movie.title, movie_path(id: movie.id) %>
++                        <p><%= link_to "スケジュール編集", admin_movie_performances_path(movie_id: movie.id) %></p>
++                    </h3>
++                    <% if params[:screening_date].present? %>
++                        <% movie.performances.where(screening_date: params[:screening_date]).order(:screening_date).each do |pf| %>
++                                <p style="color: blue"><%= pf.screening_date.strftime("%m/%d") %></p>
++                                <% if current_member.present? %>
++                                    <p><%= link_to pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M"), "/movies/#{movie.id}/performances/#{pf.id}/seats"  %></p>
++                                <% else %>
++                                    <p><%= pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M") %>
++                                <% end %>
++                        <% end %>
++                    <% else %>
++                        <% movie.performances.each do |pf| %>
++                                <p style="color: blue"><%= pf.screening_date.strftime("%m/%d") %></p>
++                                <p><%= pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M") %>
++                        <% end %>
++                    <% end %>
++                </li>
++            </div>
++        <% end %>
++    </ul>
++</table>
+\ No newline at end of file
+diff --git a/app/views/admin/movies/show.html.erb b/app/views/admin/movies/show.html.erb
+new file mode 100644
+index 0000000..42c21ed
+--- /dev/null
++++ b/app/views/admin/movies/show.html.erb
+@@ -0,0 +1,7 @@
++<% @page_title = "#{@movie.title}の詳細" %>
++
++<h1><%= @page_title %></h1>
++
++<div class="toolbar"><%= link_to "編集", [:edit,:admin, @movie] %></div>
++
++<%= render "body" %>
+\ No newline at end of file
+diff --git a/app/views/admin/passwords/edit.html.erb b/app/views/admin/passwords/edit.html.erb
+new file mode 100644
+index 0000000..b56ff6c
+--- /dev/null
++++ b/app/views/admin/passwords/edit.html.erb
+@@ -0,0 +1,25 @@
++<% @page_title = "パスワードの変更" %>
++<h1><%= @page_title %></h1>
++
++<div class="toolbar"><%= link_to "マイアカウントに戻る", :account %></div>
++
++<%= form_for @member, as: "account", url: :password do |form| %>
++<%= render "shared/errors", obj: @member %>
++
++<table class="attr">
++    <tr>
++        <th><%= form.label :current_password %></th>
++        <td><%= form.password_field :current_password %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :password %></th>
++        <td><%= form.password_field :password %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :password_confirmation %></th>
++        <td><%= form.password_field :password_confirmation %></td>
++    </tr>
++</table>
++
++<div><%= form.submit "変更" %></div>
++<% end %>
+diff --git a/app/views/admin/performances/index.html.erb b/app/views/admin/performances/index.html.erb
+new file mode 100644
+index 0000000..2dbfd7e
+--- /dev/null
++++ b/app/views/admin/performances/index.html.erb
+@@ -0,0 +1,39 @@
++<% @page_title = "上映を登録 ※予約がある場合削除不可"%>
++<h1><%= @page_title %></h1>
++
++<table class ="list">
++    <thead>
++        <tr>
++            <th>年月日</th>
++            <th>時刻</th>
++            <th>操作</th>
++        </tr>
++    </thead>
++    <tbody>
++        <% @performances.each do |perf| %>
++            <tr>
++                <td><%= perf.screening_date.strftime("%Y/%m/%d") %></td>
++                <td><%= perf.start_time.strftime("%H:%M") %>~<%= perf.end_time.strftime("%H:%M") %></td>
++                <% if Performance.find_by(id: perf.id).seats.present? %>
++                    <td>×</td>
++                <% else %>
++                    <td><%= link_to "削除", "/movies/#{params[:movie_id]}/performances/#{perf.id}", method: :delete,
++                                data: {confirm: "本当に削除しますか？"} %></td>
++                <% end %>
++            </tr>
++        <% end %>
++        <%= form_for @performance, url: admin_movie_performances_path do |form| %>
++        <%= form.hidden_field :movie_id, :value => params[:movie_id] %>
++            <tr>
++                <td><%= form.date_select :screening_date,
++                            start_year: Time.current.year,
++                            use_month_numbers: true %></td>
++                <td><%= form.label :start_time, "開始時間："%>
++                    <%= form.time_select :start_time %></td>
++                    <% options = [1,2,3] %>
++                <td><%= form.submit "add" %></td>
++            </tr>
++        <% end %>
++    </tbody>
++</table>      
++
+diff --git a/app/views/admin/reservations/.DS_Store b/app/views/admin/reservations/.DS_Store
+new file mode 100644
+index 0000000..4ea29c6
+Binary files /dev/null and b/app/views/admin/reservations/.DS_Store differ
+diff --git a/app/views/admin/reservations/_body.html.erb b/app/views/admin/reservations/_body.html.erb
+new file mode 100644
+index 0000000..8a7ec4a
+--- /dev/null
++++ b/app/views/admin/reservations/_body.html.erb
+@@ -0,0 +1,22 @@
++<table class="attr">
++  <tr>
++    <th>タイトル</th>
++    <td><%= @movie.title  %></td>
++  </tr>
++  <tr>
++    <th>上映日</th>
++    <td><%= @performance.screening_date %></td>
++  </tr>
++  <tr>
++    <th>上映時間</th>
++    <td><%= @performance.start_time.strftime("%H:%M")+"~"+@performance.end_time.strftime("%H:%M") %></td>
++  </tr>
++  <tr>
++    <th>席</th>
++    <td><%= @seat.en_number+"-"+@seat.number %></td>
++  </tr>
++  <tr>
++    <th>チケット種別</th>
++    <td><%= @kind.kind_name+" ￥#{@kind.fee}" %></td>
++  </tr>
++</table>
+diff --git a/app/views/admin/reservations/index.html.erb b/app/views/admin/reservations/index.html.erb
+new file mode 100644
+index 0000000..f6a4dac
+--- /dev/null
++++ b/app/views/admin/reservations/index.html.erb
+@@ -0,0 +1,30 @@
++<% @page_title = "全予約一覧" %>
++<h1><%= @page_title %></h1>
++
++
++<% if @reservations.present? %>
++    <table class ="list">
++        <thead>
++            <tr>
++                <th>ユーザ名</th>
++                <th>チケット</th>
++                <th>タイトル</th>
++                <th>上映日</th>
++                <th>登録日</th>
++            </tr>
++        </thead>
++        <tbody>
++            <% @reservations.each do |r| %>
++                <tr>
++                    <td><%= r.member.user_name %></td>
++                    <td><%= r.kind.kind_name %></td>
++                    <td><%= r.performance.movie.title%></td>
++                    <td><%= r.performance.screening_date %></td>
++                    <td><%= r.created_at.strftime('%F %T') %></td>
++                </tr>
++            <% end %>
++        </tbody>
++    </table>
++<% else %>
++    <p>会員情報がありません。</p>
++<% end %>
+\ No newline at end of file
+diff --git a/app/views/admin/reservations/new.html.erb b/app/views/admin/reservations/new.html.erb
+new file mode 100644
+index 0000000..a0ac4b1
+--- /dev/null
++++ b/app/views/admin/reservations/new.html.erb
+@@ -0,0 +1,14 @@
++<% @page_title = "チケット選択" %>
++<h1><%= @page_title %></h1>
++
++
++<p><%= @movie.title %></p></br>
++<p><%= @performance.screening_date %></p></br>
++<p><%= @performance.start_time.strftime("%H:%M")+"~"+@performance.end_time.strftime("%H:%M") %></p></br>
++<p><%= @seat.en_number+"-"+@seat.number %></p>
++<%= form_for @reservation, url: movie_performance_seat_reservations_path do |f| %>
++    <%= f.select :kind_id, [["一般：￥2,000",1],["大学生・高校生：￥1,800",2],["幼児・小中高生：￥1,300",3],["シニア：￥1,300",4]]%>
++    <%= f.submit "add" %>
++<% end %>
++
++
+diff --git a/app/views/admin/reservations/show.html.erb b/app/views/admin/reservations/show.html.erb
+new file mode 100644
+index 0000000..3b4f554
+--- /dev/null
++++ b/app/views/admin/reservations/show.html.erb
+@@ -0,0 +1,7 @@
++<% @page_title = "予約完了" %>
++
++<h1><%= @page_title %></h1>
++
++
++<%= render "body" %>
++<%= link_to "予約一覧", :reservations %>
+\ No newline at end of file
+diff --git a/app/views/admin/seats/_back_seat.html.erb b/app/views/admin/seats/_back_seat.html.erb
+new file mode 100644
+index 0000000..998dd28
+--- /dev/null
++++ b/app/views/admin/seats/_back_seat.html.erb
+@@ -0,0 +1,176 @@
++<div align="center">
++    <table id="back-seat">
++        <tr>
++            <% Seat.where(id: 21..22).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>C</th>
++            <% Seat.where(id: 23..32).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>C</th>
++            <% Seat.where(id: 33..34).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++        </tr>
++        <tr>
++            <% Seat.where(id: 35..36).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>D</th>
++            <% Seat.where(id: 37..46).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>D</th>
++            <% Seat.where(id: 47..48).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++
++        </tr>
++        <tr>
++            <% Seat.where(id: 49..50).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>E</th>
++            <% Seat.where(id: 51..60).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>E</th>
++            <% Seat.where(id: 61..62).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++
++        </tr>
++        <tr>
++            <% Seat.where(id: 63..64).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>F</th>
++            <% Seat.where(id: 65..74).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>F</th>
++            <% Seat.where(id: 75..76).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++        </tr>
++        <tr>
++            <% Seat.where(id: 77..78).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>G</th>
++            <% Seat.where(id: 79..88).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>G</th>
++            <% Seat.where(id: 89..90).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++        </tr>
++        <tr>
++            <% Seat.where(id: 91..92).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>H</th>
++            <% Seat.where(id: 93..102).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>H</th>
++            <% Seat.where(id: 103..104).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++        </tr>
++        <tr>
++            <th>14</th>
++            <th>13</th>
++            <th>&nbsp;</th>
++            <th>12</th>
++            <th>11</th>
++            <th>10</th>
++            <th>9</th>
++            <th>8</th>
++            <th>7</th>
++            <th>6</th>
++            <th>5</th>
++            <th>4</th>
++            <th>3</th>
++            <th>&nbsp;</th>
++            <th>2</th>
++            <th>1</th>
++
++        </tr>
++
++    </table>
++</div>
+\ No newline at end of file
+diff --git a/app/views/admin/seats/_front_seat.html.erb b/app/views/admin/seats/_front_seat.html.erb
+new file mode 100644
+index 0000000..dd12fbd
+--- /dev/null
++++ b/app/views/admin/seats/_front_seat.html.erb
+@@ -0,0 +1,26 @@
++<div align="center">
++    <table id="front-seat">
++        <tr>
++            <th>A</th>
++                <% Seat.where(id: 1..10).each do |seat| %>
++                    <% if @reserved.find_by(seat_id: seat.id) %>
++                        <td class="reserved"><%= seat.number+"-"+seat.en_number %></td class="reserved">
++                    <% else %>
++                        <td class="empty"><%= link_to "#{seat.number}-#{seat.en_number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="reserved">
++                    <% end %>
++                <% end %>
++            <th>A</th>
++        </tr>
++        <tr>
++            <th>B</th>
++                <% Seat.where(id: 11..20).each do |seat| %>
++                    <% if @reserved.find_by(seat_id: seat.id) %>
++                        <td class="reserved"><%= seat.number+"-"+seat.en_number %></td class="reserved">
++                    <% else %>
++                        <td class="empty"><%= link_to "#{seat.number}-#{seat.en_number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="reserved">
++                    <% end %>
++                <% end %>
++            <th>B</th>
++        </tr>
++    </table>
++</div>
+\ No newline at end of file
+diff --git a/app/views/admin/seats/index.html.erb b/app/views/admin/seats/index.html.erb
+new file mode 100644
+index 0000000..eed60d4
+--- /dev/null
++++ b/app/views/admin/seats/index.html.erb
+@@ -0,0 +1,17 @@
++
++<% @page_title = "予約" %>
++<h1><%= @page_title %></h1>
++
++
++<div id="right">
++    <ul>
++        <li><%= image_tag 'empty.png'%><p class="locate">　空席</p></li>
++        <li><%= image_tag 'reserved.png' %><p class="locate">　予約済み/選択不可</p></li>
++    </ul>
++</div>
++<div id="left">
++    <h2 align="center">スクリーン</h2>
++    <%= render "front_seat" %>
++    <%= render "back_seat" %>
++</div>
++
+diff --git a/app/views/admin/shared/_admin_menubar.html.erb b/app/views/admin/shared/_admin_menubar.html.erb
+new file mode 100644
+index 0000000..8fda797
+--- /dev/null
++++ b/app/views/admin/shared/_admin_menubar.html.erb
+@@ -0,0 +1,5 @@
++<nav class="menubar" id="admin-menubar">
++<ul>
++    <%= menu_link_to "管理TOP", :admin_root %>
++    
++</ul>
+\ No newline at end of file
+diff --git a/app/views/admin/shared/_errors.html.erb b/app/views/admin/shared/_errors.html.erb
+new file mode 100644
+index 0000000..22a1137
+--- /dev/null
++++ b/app/views/admin/shared/_errors.html.erb
+@@ -0,0 +1,10 @@
++<% if obj.errors.present? %>
++    <div id="errors">
++        <h3>エラーがあります。</h3>
++        <ul>
++            <% obj.errors.full_messages.each do |msg| %>
++                <li><%= msg %>
++            <% end %>
++        </ul>
++    </div>
++<% end %>
+\ No newline at end of file
+diff --git a/app/views/admin/shared/_header.html.erb b/app/views/admin/shared/_header.html.erb
+new file mode 100644
+index 0000000..43dd6a0
+--- /dev/null
++++ b/app/views/admin/shared/_header.html.erb
+@@ -0,0 +1,16 @@
++<h2><%= link_to "POPCORN", "/" %></h2>
++<% if current_member %>
++  <ul class="account-menu">
++    <%= menu_link_to current_member.user_name + "さん", :account %>
++    <%= menu_link_to "ログアウト", :session,
++          method: :delete, data: { confirm: "ログアウトしますか？" } %>
++  </ul>
++<% end %>
++
++<%=
++  if controller.kind_of?(Admin::Base) 
++      render "shared/admin_menubar"
++  else
++      render "shared/menubar"
++  end
++%>
+\ No newline at end of file
+diff --git a/app/views/admin/shared/_login_form.html.erb b/app/views/admin/shared/_login_form.html.erb
+new file mode 100644
+index 0000000..74f4f1b
+--- /dev/null
++++ b/app/views/admin/shared/_login_form.html.erb
+@@ -0,0 +1,16 @@
++<h2>ログイン</h2>
++<% if flash.alert %><p class="alert"><%= flash.alert %></p><% end %>
++<%= form_tag :session, id: "login-form" do %>
++  <div>
++    <label>ユーザー名：</label>
++    <input type="text" name ="user_name", autocomplete='off'>
++  </div>
++  <div>
++    <label>パスワード：</label>
++    <input type="password" name="password", autocomplete='off'>
++  </div>
++  <div>
++    <input type="submit" value="ログイン">
++  </div>
++<% end %>
++<%= link_to "新規会員登録へ", new_member_path %>
+\ No newline at end of file
+diff --git a/app/views/admin/shared/_member_form.html.erb b/app/views/admin/shared/_member_form.html.erb
+new file mode 100644
+index 0000000..ec6adf8
+--- /dev/null
++++ b/app/views/admin/shared/_member_form.html.erb
+@@ -0,0 +1,59 @@
++<%= render "shared/errors", obj: @member %>
++<table class="attr">
++    <tr>
++        <th><%= form.label :user_name, "ユーザー名" %></th>
++        <td><%= form.text_field :user_name, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :full_name, "氏名" %></th>
++        <td><%= form.text_field :full_name, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th>性別</th>
++        <td>
++        <%= form.radio_button :sex, 1 %>
++        <%= form.label :sex_1, "男" %>
++        <%= form.radio_button :sex, 2 %>
++        <%= form.label :sex_2, "女" %>
++        </td>
++    </tr>
++    <tr>
++        <th><%= form.label :birthday, "誕生日",
++                for: "member_birthday_1i" %></th>
++        <td><%= form.date_select :birthday,
++                start_year: 1940, end_year: Time.current.year,
++                use_month_numbers: true %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :email, "メールアドレス" %></th>
++        <td><%= form.text_field :email, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :credit_number, "クレジット番号" %></th>
++        <td><%= form.text_field :credit_number, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :expiration_date, "有効期限" %></th>
++        <td><%= form.text_field :expiration_date, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :authentication_number, "認証コード" %></th>
++        <td><%= form.text_field :authentication_number, autocomplete: 'off' %></td>
++    </tr>
++    <% if @member.new_record? %>
++        <tr>
++            <th><%= form.label :password, "パスワード"%></th>
++            <td><%= form.text_field :password, autocomplete: 'off' %></td>
++            </tr>
++            
++        <% if controller.kind_of?(MembersController) %>
++            <tr>
++            <th><%= Member.human_attribute_name(:administrator) %></th>
++                <td>
++                    <%= form.check_box :administrator %>
++                    <%= form.label :administrator %>
++                </td>
++            </tr>
++        <% end %>
++    <% end %>
++</table>
+\ No newline at end of file
+diff --git a/app/views/admin/shared/_menubar.html.erb b/app/views/admin/shared/_menubar.html.erb
+new file mode 100644
+index 0000000..220ff17
+--- /dev/null
++++ b/app/views/admin/shared/_menubar.html.erb
+@@ -0,0 +1,11 @@
++<nav class="menubar">
++  <ul>
++    <%= menu_link_to "TOP映画一覧", "/" %>
++    <%= menu_link_to "公開終了映画", finished_movies_path %>
++    <%= menu_link_to "映画登録", :new_movie%>
++    <%= menu_link_to "会員名簿", :members %>
++    <% if current_member.administrator? %>
++        <%= menu_link_to "管理ページ", :admin_root %>
++    <% end %>
++  </ul>
++</nav>
+diff --git a/app/views/admin/shared/_movie_form.erb b/app/views/admin/shared/_movie_form.erb
+new file mode 100644
+index 0000000..830ead0
+--- /dev/null
++++ b/app/views/admin/shared/_movie_form.erb
+@@ -0,0 +1,39 @@
++<%= render "shared/errors", obj: @movie %>
++<table class="attr">
++    <tr>
++        <th><%= form.label :title, "タイトル" %></th>
++        <td><%= form.text_field :title, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :story, "ストーリー" %></th>
++        <td><%= form.text_area :story, size: "30x5", autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :release_date, "公開日" %></th>
++        <td><%= form.date_select :release_date,
++                    use_month_numbers: true %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :running_time, "上映時間" %></th>
++        <td><%= form.number_field :running_time, min:0, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :distribution, "配給" %></th>
++        <td><%= form.text_field :distribution, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :director, "監督" %></th>
++        <td><%= form.text_field :director, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :actor, "俳優" %></th>
++        <td><%= form.text_field :actor, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th>状態</th>
++        <td><%= form.radio_button :finished, 0 %>
++        <%= form.label :finished_1, "公開中" %>
++        <%= form.radio_button :finished, 1 %>
++        <%= form.label :finished_2, "公開終了" %></td> 
++    </tr>
++</table>
+\ No newline at end of file
+diff --git a/app/views/admin/shared/_sidebar.html.erb b/app/views/admin/shared/_sidebar.html.erb
+new file mode 100644
+index 0000000..c12b211
+--- /dev/null
++++ b/app/views/admin/shared/_sidebar.html.erb
+@@ -0,0 +1,15 @@
++<%= render "shared/login_form" unless current_member %>
++
++<h2>最新ニュース</h2>
++<ul>
++  <% 5.times do |i| %>
++    <li><%= link_to "ニュースの見出し", "#" %></li>
++  <% end %>
++</ul>
++
++<h2>会員のブログ</h2>
++<ul>
++  <% 5.times do |i| %>
++    <li><%= link_to "ブログの見出し", "#" %></li>
++  <% end %>
++</ul>
+diff --git a/app/views/errors/bad_request.html.erb b/app/views/errors/bad_request.html.erb
+new file mode 100644
+index 0000000..84a609b
+--- /dev/null
++++ b/app/views/errors/bad_request.html.erb
+@@ -0,0 +1,3 @@
++<% @page_title = "Bad Request" %>
++<h1>400 Bad Request</h1>
++<p>リクエストの形式が正しくありません。</p>
+diff --git a/app/views/errors/forbidden.html.erb b/app/views/errors/forbidden.html.erb
+new file mode 100644
+index 0000000..6fe0526
+--- /dev/null
++++ b/app/views/errors/forbidden.html.erb
+@@ -0,0 +1,3 @@
++<% @page_title = "Forbidden" %>
++<h1>403 Forbidden</h1>
++<p>このページにはアクセスできません。</p>
+diff --git a/app/views/errors/internal_server_error.html.erb b/app/views/errors/internal_server_error.html.erb
+new file mode 100644
+index 0000000..565330c
+--- /dev/null
++++ b/app/views/errors/internal_server_error.html.erb
+@@ -0,0 +1,3 @@
++<% @page_title = "Internal Server Error" %>
++<h1>500 Internal Server Error</h1>
++<p>システムエラーのためページが表示できません。</p>
+diff --git a/app/views/errors/login_required.html.erb b/app/views/errors/login_required.html.erb
+new file mode 100644
+index 0000000..93e6814
+--- /dev/null
++++ b/app/views/errors/login_required.html.erb
+@@ -0,0 +1,4 @@
++<% @page_title = "ログインが必要です" %>
++<h1><%= @page_title %></h1>
++
++<%= render "shared/login_form" %>
+diff --git a/app/views/errors/not_found.html.erb b/app/views/errors/not_found.html.erb
+new file mode 100644
+index 0000000..c08a206
+--- /dev/null
++++ b/app/views/errors/not_found.html.erb
+@@ -0,0 +1,3 @@
++<% @page_title = "Not Found" %>
++<h1>404 Not Found</h1>
++<p>ページが見つかりません。</p>
+diff --git a/app/views/layouts/application.html.erb b/app/views/layouts/application.html.erb
+index 95c2d2e..2a86759 100644
+--- a/app/views/layouts/application.html.erb
++++ b/app/views/layouts/application.html.erb
+@@ -1,7 +1,7 @@
+ <!DOCTYPE html>
+ <html>
+   <head>
+-    <title>Popcorn</title>
++    <title><%= page_title %></title>
+     <%= csrf_meta_tags %>
+     <%= csp_meta_tag %>
+ 
+@@ -10,6 +10,21 @@
+   </head>
+ 
+   <body>
++    <div id="container">
++      <header>
++        <%= render "shared/header" %>
++      </header>
++      <main>
++        <% if flash.notice %>
++          <p class="notice"><%= flash.notice %></p>
++        <% end %>
+         <%= yield %>
++      </main>
++      <aside id="sidebar">
++        <%= render "shared/sidebar" %>
++      </aside>
++      <footer>
++      </footer>
++    </div>
+   </body>
+ </html>
+diff --git a/app/views/layouts/error.html.erb b/app/views/layouts/error.html.erb
+new file mode 100644
+index 0000000..1400ae0
+--- /dev/null
++++ b/app/views/layouts/error.html.erb
+@@ -0,0 +1,24 @@
++<!DOCTYPE html>
++<html>
++  <head>
++    <meta charset="utf-8">
++    <title><%= page_title %></title>
++    <%= stylesheet_link_tag "application", media: "all" %>
++  </head>
++  <body>
++    <div id="container">
++      <header>
++        <%= image_tag("logo.gif", size: "272x48", alt: "Morning Glory") %>
++        <nav class="menubar">
++          <a href="/">TOP</a>
++        </nav>
++      </header>
++      <main>
++        <%= yield %>
++      </main>
++      <footer>
++        <%= render "shared/footer" %>
++      </footer>
++    </div>
++  </body>
++</html>
+diff --git a/app/views/layouts/mailer.html.erb b/app/views/layouts/mailer.html.erb
+deleted file mode 100644
+index cbd34d2..0000000
+--- a/app/views/layouts/mailer.html.erb
++++ /dev/null
+@@ -1,13 +0,0 @@
+-<!DOCTYPE html>
+-<html>
+-  <head>
+-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+-    <style>
+-      /* Email styles need to be inline */
+-    </style>
+-  </head>
+-
+-  <body>
+-    <%= yield %>
+-  </body>
+-</html>
+diff --git a/app/views/layouts/mailer.text.erb b/app/views/layouts/mailer.text.erb
+deleted file mode 100644
+index 37f0bdd..0000000
+--- a/app/views/layouts/mailer.text.erb
++++ /dev/null
+@@ -1 +0,0 @@
+-<%= yield %>
+diff --git a/app/views/layouts/reservations.html.erb b/app/views/layouts/reservations.html.erb
+new file mode 100644
+index 0000000..121bcc8
+--- /dev/null
++++ b/app/views/layouts/reservations.html.erb
+@@ -0,0 +1,28 @@
++<!DOCTYPE html>
++<html>
++  <head>
++    <title><%= page_title %></title>
++    <%= csrf_meta_tags %>
++    <%= csp_meta_tag %>
++
++    <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload' %>
++    <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
++  </head>
++
++  <body>
++    <div id="container">
++      <header>
++        <%= render "shared/header" %>
++      </header>
++      <main id="main">
++        <% if flash.notice %>
++          <p class="notice"><%= flash.notice %></p>
++        <% end %>
++        <%= yield %>
++      </main>
++      
++      <footer>
++      </footer>
++    </div>
++  </body>
++</html>
+diff --git a/app/views/members/_body.html.erb b/app/views/members/_body.html.erb
+new file mode 100644
+index 0000000..c96b18f
+--- /dev/null
++++ b/app/views/members/_body.html.erb
+@@ -0,0 +1,26 @@
++<table class="attr">
++  <tr>
++    <th>ユーザー名</th>
++    <td><%= @member.user_name %></td>
++  </tr>
++  <tr>
++    <th>氏名</th>
++    <td><%= @member.full_name %></td>
++  </tr>
++  <tr>
++    <th>性別</th>
++    <td><%= @member.sex == 1 ? "男" : "女" %></td>
++  </tr>
++  <tr>
++    <th>誕生日</th>
++    <td><%= @member.birthday&.strftime("%Y年%m月%d日") %></td>
++  </tr>
++  <tr>
++    <th>メールアドレス</th>
++    <td><%= @member.email %></td>
++  </tr>
++  <tr>
++    <th>管理者</th>
++    <td><%= @member.administrator? ? "○" : "－" %></td>
++  </tr>
++</table>
+diff --git a/app/views/members/edit.html.erb b/app/views/members/edit.html.erb
+new file mode 100644
+index 0000000..be507fc
+--- /dev/null
++++ b/app/views/members/edit.html.erb
+@@ -0,0 +1,9 @@
++<% @page_title = "会員情報の編集" %>
++
++<h1><%= @page_title %></h1>
++<div class="toolbar"><%= link_to "会員の詳細に戻る", [:admin, @member] %></div>
++
++<%= form_for [:admin, @member] do |form| %>
++    <%= render "shared/member_form", form: form %>
++    <div><%= form.submit %></div>
++<% end %>
+\ No newline at end of file
+diff --git a/app/views/members/index.html.erb b/app/views/members/index.html.erb
+new file mode 100644
+index 0000000..af098c6
+--- /dev/null
++++ b/app/views/members/index.html.erb
+@@ -0,0 +1,31 @@
++<% @page_title = "会員名簿" %>
++<h1><%= @page_title %></h1>
++
++<div class="toolbar"><%= link_to "会員の新規登録", :new_admin_member %></div>
++
++<% if @members.present? %>
++    <table class ="list">
++        <thead>
++            <tr>
++                <th>ユーザ名</th>
++                <th>氏名</th>
++                <th>操作</th>
++            </tr>
++        </thead>
++        <tbody>
++            <% @members.each do |member| %>
++                <tr>
++                    <td><%= member.user_name %></td>
++                    <td><%= link_to member.full_name, [:admin, member] %></td>
++                    <td>
++                        <%= link_to "編集", [:edit, :admin, member] %>
++                        <%= link_to "削除", [:admin,member], method: :delete,
++                                data: {confirm: "本当に削除しますか？"}  %>
++                    </td>
++                </tr>
++            <% end %>
++        </tbody>
++    </table>
++<% else %>
++    <p>会員情報がありません。</p>
++<% end %>
+\ No newline at end of file
+diff --git a/app/views/members/new.html.erb b/app/views/members/new.html.erb
+new file mode 100644
+index 0000000..cdb9389
+--- /dev/null
++++ b/app/views/members/new.html.erb
+@@ -0,0 +1,8 @@
++<% @page_title = "会員の新規登録" %>
++
++<h1><%= @page_title %></h1>
++
++<%= form_for @member do |form| %>
++    <%= render "shared/member_form", form: form %>
++    <div><%= form.submit %></div>
++<% end %>
+\ No newline at end of file
+diff --git a/app/views/members/show.html.erb b/app/views/members/show.html.erb
+new file mode 100644
+index 0000000..07834ca
+--- /dev/null
++++ b/app/views/members/show.html.erb
+@@ -0,0 +1,6 @@
++<% @page_title = "会員の詳細" %>
++
++<h1><%= @page_title %></h1>
++
++
++<%= render "body" %>
+\ No newline at end of file
+diff --git a/app/views/movies/_body.html.erb b/app/views/movies/_body.html.erb
+new file mode 100644
+index 0000000..33c4a8e
+--- /dev/null
++++ b/app/views/movies/_body.html.erb
+@@ -0,0 +1,36 @@
++<table class="attr">
++
++  <tr>
++    <th>タイトル</th>
++    <td><%= @movie.title %></td>
++  </tr>
++  <tr>
++    <th>ストーリー</th>
++    <td><%= @movie.story %></td>
++  </tr>
++  <tr>
++    <th>公開日</th>
++    <td><%= @movie.release_date.strftime("%Y/%m/%d") %></td>
++  </tr>
++  <tr>
++    <th>上映時間</th>
++    <td><%= @movie.running_time %></td>
++  </tr>
++  <tr>
++    <th>配給</th>
++    <td><%= @movie.distribution %></td>
++  </tr>
++  <tr>
++    <th>監督</th>
++    <td><%= @movie.director%></td>
++  </tr>
++  <tr>
++    <th>俳優</th>
++    <td><%= @movie.actor%></td>
++  </tr>
++    <tr>
++    <th>状態</th>
++    <td><%= @movie.finished == 0 ? "詳細公開中" : "公開終了" %></td>
++  </tr>
++
++</table>
+diff --git a/app/views/movies/index.html.erb b/app/views/movies/index.html.erb
+new file mode 100644
+index 0000000..34b87b3
+--- /dev/null
++++ b/app/views/movies/index.html.erb
+@@ -0,0 +1,31 @@
++<% @page_title = "映画一覧" %>
++<h1><%= @page_title %><%= "※ログインすると予約できます" unless current_member %></h1>
++
++<%= form_tag(search_movies_path,:method => 'get') do %>
++  <%= text_field_tag "title" %>
++  <% today = Date.today%>
++  <% day=[today.strftime("%Y-%m-%d"),(today+1).strftime("%Y-%m-%d"),(today+2).strftime("%Y-%m-%d"),(today+3).strftime("%Y-%m-%d"),(today+4).strftime("%Y-%m-%d")]  %>
++  <%= select_tag "screening_date", options_for_select({"日付指定": nil,"#{day[0]}": day[0],"#{day[1]}": day[1],
++                                                        "#{day[2]}": day[2],"#{day[3]}": day[3],"#{day[4]}": day[4]}) %>
++  <%= submit_tag '検索', :name => nil %>
++<% end %>
++<table class="list">
++    <ul id="movie">
++        <% @movies.each do |movie| %>
++            <div class="movie_block">
++                <li>
++                    <h3 class="movie_title"><%= link_to movie.title, movie_path(id: movie.id) %>
++                    </h3>
++                    <% movie.performances.each do |pf| %>
++                            <p style="color: blue"><%= pf.screening_date.strftime("%m/%d") %></p>
++                            <% if current_member.present? %>
++                                <p><%= link_to pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M"), "/movies/#{movie.id}/performances/#{pf.id}/seats"  %></p>
++                            <% else %>
++                                <p><%= pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M") %>
++                            <% end %>
++                    <% end %>
++                </li>
++            </div>
++        <% end %>
++    </ul>
++</table>
+\ No newline at end of file
+diff --git a/app/views/movies/search.html.erb b/app/views/movies/search.html.erb
+new file mode 100644
+index 0000000..eb22dd6
+--- /dev/null
++++ b/app/views/movies/search.html.erb
+@@ -0,0 +1,48 @@
++<% @page_title = "検索結果" %>
++<h1><%= @page_title %><%= "※ログインすると予約できます" unless current_member %></h1>
++<p>検索</p>
++<%= form_tag(search_movies_path,:method => 'get') do %>
++  <%= text_field_tag "title" %>
++  <% today = Date.today%>
++  <% day=[today.strftime("%Y-%m-%d"),(today+1).strftime("%Y-%m-%d"),(today+2).strftime("%Y-%m-%d"),(today+3).strftime("%Y-%m-%d"),(today+4).strftime("%Y-%m-%d")]  %>
++  <%= select_tag "screening_date", options_for_select({"日付指定": nil,"#{day[0]}": day[0],"#{day[1]}": day[1],
++                                                        "#{day[2]}": day[2],"#{day[3]}": day[3],"#{day[4]}": day[4]}) %>
++  <%= submit_tag '検索', :name => nil %>
++<% end %>
++<table class="list">
++    <ul id="movie">
++        <% @movies.each do |movie| %>
++            <% if params[:screening_date].present? %>
++                <% if movie.performances.find_by(screening_date: params[:screening_date]) %>
++                    <div class="movie_block">
++                        <li>
++                            <h3 class="movie_title"><%= link_to movie.title, movie_path(id: movie.id) %></h3>
++                            <% @performances.where(movie_id: movie.id).each do |pf| %>
++                                <p style="color: blue"><%= pf.screening_date.strftime("%m/%d") %></p>
++                                <% if current_member.present? %>
++                                    <p><%= link_to pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M"), "/movies/#{movie.id}/performances/#{pf.id}/seats"  %></p>
++                                <% else %>
++                                    <p><%= pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M") %>
++                                <% end %>
++                            <% end %>
++                        </li>
++                    </div>
++                <% end %>
++            <% else %>
++                <div class="movie_block">
++                    <li>
++                        <h3 class="movie_title"><%= link_to movie.title, movie_path(id: movie.id) %></h3>
++                        <% movie.performances.each do |pf| %>
++                            <p style="color: blue"><%= pf.screening_date.strftime("%m/%d") %></p>
++                            <% if current_member.present? %>
++                                <p><%= link_to pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M"), "/movies/#{movie.id}/performances/#{pf.id}/seats"  %></p>
++                            <% else %>
++                                <p><%= pf.start_time.strftime("%H:%M")+"~"+pf.end_time.strftime("%H:%M") %>
++                            <% end %>
++                        <% end %>
++                    </li>
++                </div>
++            <% end %>
++        <% end %>
++    </ul>
++</table>
+\ No newline at end of file
+diff --git a/app/views/movies/show.html.erb b/app/views/movies/show.html.erb
+new file mode 100644
+index 0000000..ea593f2
+--- /dev/null
++++ b/app/views/movies/show.html.erb
+@@ -0,0 +1,5 @@
++<% @page_title = "#{@movie.title}の詳細" %>
++
++<h1><%= @page_title %></h1>
++
++<%= render "body" %>
+\ No newline at end of file
+diff --git a/app/views/passwords/edit.html.erb b/app/views/passwords/edit.html.erb
+new file mode 100644
+index 0000000..b56ff6c
+--- /dev/null
++++ b/app/views/passwords/edit.html.erb
+@@ -0,0 +1,25 @@
++<% @page_title = "パスワードの変更" %>
++<h1><%= @page_title %></h1>
++
++<div class="toolbar"><%= link_to "マイアカウントに戻る", :account %></div>
++
++<%= form_for @member, as: "account", url: :password do |form| %>
++<%= render "shared/errors", obj: @member %>
++
++<table class="attr">
++    <tr>
++        <th><%= form.label :current_password %></th>
++        <td><%= form.password_field :current_password %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :password %></th>
++        <td><%= form.password_field :password %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :password_confirmation %></th>
++        <td><%= form.password_field :password_confirmation %></td>
++    </tr>
++</table>
++
++<div><%= form.submit "変更" %></div>
++<% end %>
+diff --git a/app/views/reservations/.DS_Store b/app/views/reservations/.DS_Store
+new file mode 100644
+index 0000000..4ea29c6
+Binary files /dev/null and b/app/views/reservations/.DS_Store differ
+diff --git a/app/views/reservations/_body.html.erb b/app/views/reservations/_body.html.erb
+new file mode 100644
+index 0000000..8a7ec4a
+--- /dev/null
++++ b/app/views/reservations/_body.html.erb
+@@ -0,0 +1,22 @@
++<table class="attr">
++  <tr>
++    <th>タイトル</th>
++    <td><%= @movie.title  %></td>
++  </tr>
++  <tr>
++    <th>上映日</th>
++    <td><%= @performance.screening_date %></td>
++  </tr>
++  <tr>
++    <th>上映時間</th>
++    <td><%= @performance.start_time.strftime("%H:%M")+"~"+@performance.end_time.strftime("%H:%M") %></td>
++  </tr>
++  <tr>
++    <th>席</th>
++    <td><%= @seat.en_number+"-"+@seat.number %></td>
++  </tr>
++  <tr>
++    <th>チケット種別</th>
++    <td><%= @kind.kind_name+" ￥#{@kind.fee}" %></td>
++  </tr>
++</table>
+diff --git a/app/views/reservations/index.html.erb b/app/views/reservations/index.html.erb
+new file mode 100644
+index 0000000..35ca61d
+--- /dev/null
++++ b/app/views/reservations/index.html.erb
+@@ -0,0 +1,35 @@
++<% @page_title = "予約一覧" %>
++<h1><%= @page_title %></h1>
++
++    <% @reservations.each do |r| %>
++        <table class="attr">
++            <tr>
++                <th>タイトル</th>
++                <td><%= r.performance.movie.title  %></td>
++            </tr>
++            <tr>
++                <th>上映日</th>
++                <td><%= r.performance.screening_date %></td>
++            </tr>
++            <tr>
++                <th>上映時間</th>
++                <td><%= r.performance.start_time.strftime("%H:%M")+"~"+r.performance.end_time.strftime("%H:%M") %></td>
++            </tr>
++            <tr>
++                <th>席</th>
++                <td>
++                    <% r.seats.each do |s| %>
++                        <%= s.en_number+"-"+s.number %>
++                    <% end %>
++                </td>
++            </tr>
++            <tr>
++                <th>チケット種別</th>
++                <td><%= r.kind.kind_name+" ￥#{r.kind.fee}" %></td>
++            </tr>
++            <tr>
++                <th>予約日時</th>
++                <td><%= r.created_at.strftime('%F %T') %></td>
++            </tr>
++        </table>
++    <% end %>
+diff --git a/app/views/reservations/new.html.erb b/app/views/reservations/new.html.erb
+new file mode 100644
+index 0000000..a0ac4b1
+--- /dev/null
++++ b/app/views/reservations/new.html.erb
+@@ -0,0 +1,14 @@
++<% @page_title = "チケット選択" %>
++<h1><%= @page_title %></h1>
++
++
++<p><%= @movie.title %></p></br>
++<p><%= @performance.screening_date %></p></br>
++<p><%= @performance.start_time.strftime("%H:%M")+"~"+@performance.end_time.strftime("%H:%M") %></p></br>
++<p><%= @seat.en_number+"-"+@seat.number %></p>
++<%= form_for @reservation, url: movie_performance_seat_reservations_path do |f| %>
++    <%= f.select :kind_id, [["一般：￥2,000",1],["大学生・高校生：￥1,800",2],["幼児・小中高生：￥1,300",3],["シニア：￥1,300",4]]%>
++    <%= f.submit "add" %>
++<% end %>
++
++
+diff --git a/app/views/reservations/show.html.erb b/app/views/reservations/show.html.erb
+new file mode 100644
+index 0000000..3b4f554
+--- /dev/null
++++ b/app/views/reservations/show.html.erb
+@@ -0,0 +1,7 @@
++<% @page_title = "予約完了" %>
++
++<h1><%= @page_title %></h1>
++
++
++<%= render "body" %>
++<%= link_to "予約一覧", :reservations %>
+\ No newline at end of file
+diff --git a/app/views/seats/_back_seat.html.erb b/app/views/seats/_back_seat.html.erb
+new file mode 100644
+index 0000000..998dd28
+--- /dev/null
++++ b/app/views/seats/_back_seat.html.erb
+@@ -0,0 +1,176 @@
++<div align="center">
++    <table id="back-seat">
++        <tr>
++            <% Seat.where(id: 21..22).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>C</th>
++            <% Seat.where(id: 23..32).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>C</th>
++            <% Seat.where(id: 33..34).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++        </tr>
++        <tr>
++            <% Seat.where(id: 35..36).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>D</th>
++            <% Seat.where(id: 37..46).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>D</th>
++            <% Seat.where(id: 47..48).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++
++        </tr>
++        <tr>
++            <% Seat.where(id: 49..50).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>E</th>
++            <% Seat.where(id: 51..60).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>E</th>
++            <% Seat.where(id: 61..62).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++
++        </tr>
++        <tr>
++            <% Seat.where(id: 63..64).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>F</th>
++            <% Seat.where(id: 65..74).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>F</th>
++            <% Seat.where(id: 75..76).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++        </tr>
++        <tr>
++            <% Seat.where(id: 77..78).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>G</th>
++            <% Seat.where(id: 79..88).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>G</th>
++            <% Seat.where(id: 89..90).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++        </tr>
++        <tr>
++            <% Seat.where(id: 91..92).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>H</th>
++            <% Seat.where(id: 93..102).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++            <th>H</th>
++            <% Seat.where(id: 103..104).each do |seat| %>
++                <% if @reserved.find_by(seat_id: seat.id) %>
++                    <td class="reserved"><%= seat.en_number+"-"+seat.number %></td class="empty">
++                <% else %>
++                    <td class="empty"><%= link_to "#{seat.en_number}-#{seat.number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="empty">
++                <% end %>
++            <% end %>
++        </tr>
++        <tr>
++            <th>14</th>
++            <th>13</th>
++            <th>&nbsp;</th>
++            <th>12</th>
++            <th>11</th>
++            <th>10</th>
++            <th>9</th>
++            <th>8</th>
++            <th>7</th>
++            <th>6</th>
++            <th>5</th>
++            <th>4</th>
++            <th>3</th>
++            <th>&nbsp;</th>
++            <th>2</th>
++            <th>1</th>
++
++        </tr>
++
++    </table>
++</div>
+\ No newline at end of file
+diff --git a/app/views/seats/_front_seat.html.erb b/app/views/seats/_front_seat.html.erb
+new file mode 100644
+index 0000000..dd12fbd
+--- /dev/null
++++ b/app/views/seats/_front_seat.html.erb
+@@ -0,0 +1,26 @@
++<div align="center">
++    <table id="front-seat">
++        <tr>
++            <th>A</th>
++                <% Seat.where(id: 1..10).each do |seat| %>
++                    <% if @reserved.find_by(seat_id: seat.id) %>
++                        <td class="reserved"><%= seat.number+"-"+seat.en_number %></td class="reserved">
++                    <% else %>
++                        <td class="empty"><%= link_to "#{seat.number}-#{seat.en_number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="reserved">
++                    <% end %>
++                <% end %>
++            <th>A</th>
++        </tr>
++        <tr>
++            <th>B</th>
++                <% Seat.where(id: 11..20).each do |seat| %>
++                    <% if @reserved.find_by(seat_id: seat.id) %>
++                        <td class="reserved"><%= seat.number+"-"+seat.en_number %></td class="reserved">
++                    <% else %>
++                        <td class="empty"><%= link_to "#{seat.number}-#{seat.en_number}", "/movies/#{params[:movie_id]}/performances/#{params[:performance_id]}/seats/#{seat.id}/reservations/new" %></td class="reserved">
++                    <% end %>
++                <% end %>
++            <th>B</th>
++        </tr>
++    </table>
++</div>
+\ No newline at end of file
+diff --git a/app/views/seats/index.html.erb b/app/views/seats/index.html.erb
+new file mode 100644
+index 0000000..eed60d4
+--- /dev/null
++++ b/app/views/seats/index.html.erb
+@@ -0,0 +1,17 @@
++
++<% @page_title = "予約" %>
++<h1><%= @page_title %></h1>
++
++
++<div id="right">
++    <ul>
++        <li><%= image_tag 'empty.png'%><p class="locate">　空席</p></li>
++        <li><%= image_tag 'reserved.png' %><p class="locate">　予約済み/選択不可</p></li>
++    </ul>
++</div>
++<div id="left">
++    <h2 align="center">スクリーン</h2>
++    <%= render "front_seat" %>
++    <%= render "back_seat" %>
++</div>
++
+diff --git a/app/views/shared/_admin_menubar.html.erb b/app/views/shared/_admin_menubar.html.erb
+new file mode 100644
+index 0000000..ca58c26
+--- /dev/null
++++ b/app/views/shared/_admin_menubar.html.erb
+@@ -0,0 +1,8 @@
++<nav class="menubar" id="admin-menubar">
++<ul>
++    <%= menu_link_to "管理TOP", :admin_root %>
++    <%= menu_link_to "公開終了映画", :finished_admin_movies %>
++    <%= menu_link_to "映画登録", :new_admin_movie%>
++    <%= menu_link_to "会員管理", :admin_members %>
++    <%= menu_link_to "予約一覧", :admin_reservations%>
++</ul>
+\ No newline at end of file
+diff --git a/app/views/shared/_errors.html.erb b/app/views/shared/_errors.html.erb
+new file mode 100644
+index 0000000..22a1137
+--- /dev/null
++++ b/app/views/shared/_errors.html.erb
+@@ -0,0 +1,10 @@
++<% if obj.errors.present? %>
++    <div id="errors">
++        <h3>エラーがあります。</h3>
++        <ul>
++            <% obj.errors.full_messages.each do |msg| %>
++                <li><%= msg %>
++            <% end %>
++        </ul>
++    </div>
++<% end %>
+\ No newline at end of file
+diff --git a/app/views/shared/_header.html.erb b/app/views/shared/_header.html.erb
+new file mode 100644
+index 0000000..43dd6a0
+--- /dev/null
++++ b/app/views/shared/_header.html.erb
+@@ -0,0 +1,16 @@
++<h2><%= link_to "POPCORN", "/" %></h2>
++<% if current_member %>
++  <ul class="account-menu">
++    <%= menu_link_to current_member.user_name + "さん", :account %>
++    <%= menu_link_to "ログアウト", :session,
++          method: :delete, data: { confirm: "ログアウトしますか？" } %>
++  </ul>
++<% end %>
++
++<%=
++  if controller.kind_of?(Admin::Base) 
++      render "shared/admin_menubar"
++  else
++      render "shared/menubar"
++  end
++%>
+\ No newline at end of file
+diff --git a/app/views/shared/_login_form.html.erb b/app/views/shared/_login_form.html.erb
+new file mode 100644
+index 0000000..6fbaabd
+--- /dev/null
++++ b/app/views/shared/_login_form.html.erb
+@@ -0,0 +1,16 @@
++<h2>ログイン</h2>
++<% if flash.alert %><p class="alert"><%= flash.alert %></p><% end %>
++<%= form_tag :session, id: "login-form" do %>
++  <div>
++    <label>ユーザー名：</label>
++    <input type="text" name ="user_name", autocomplete='off'>
++  </div>
++  <div>
++    <label>パスワード：</label>
++    <input type="password" name="password", autocomplete='off'>
++  </div>
++  <div>
++    <input type="submit" value="ログイン">
++  </div>
++<% end %>
++<%= link_to "新規会員登録へ", :new_member %>
+\ No newline at end of file
+diff --git a/app/views/shared/_member_form.html.erb b/app/views/shared/_member_form.html.erb
+new file mode 100644
+index 0000000..3f6d0a8
+--- /dev/null
++++ b/app/views/shared/_member_form.html.erb
+@@ -0,0 +1,62 @@
++<%= render "shared/errors", obj: @member %>
++<table class="attr">
++    <tr>
++        <th><%= form.label :user_name, "ユーザー名" %></th>
++        <td><%= form.text_field :user_name, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :full_name, "氏名" %></th>
++        <td><%= form.text_field :full_name, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th>性別</th>
++        <td>
++        <%= form.radio_button :sex, 1 %>
++        <%= form.label :sex_1, "男" %>
++        <%= form.radio_button :sex, 2 %>
++        <%= form.label :sex_2, "女" %>
++        </td>
++    </tr>
++    <tr>
++        <th><%= form.label :birthday, "誕生日",
++                for: "member_birthday_1i" %></th>
++        <td><%= form.date_select :birthday,
++                start_year: 1940, end_year: Time.current.year,
++                use_month_numbers: true %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :email, "メールアドレス" %></th>
++        <td><%= form.text_field :email, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :credit_number, "クレジット番号" %></th>
++        <td><%= form.text_field :credit_number, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :expiration_date, "有効期限",
++                for: "member_birthday_1i" %></th>
++        <td><%= form.date_select :expiration_date,
++                start_year: Time.current.year,
++                use_month_numbers: true %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :authentication_number, "認証コード" %></th>
++        <td><%= form.text_field :authentication_number, autocomplete: 'off' %></td>
++    </tr>
++    <% if @member.new_record? %>
++        <tr>
++            <th><%= form.label :password, "パスワード"%></th>
++            <td><%= form.text_field :password, autocomplete: 'off' %></td>
++            </tr>
++            
++        <% if controller.kind_of?(Admin::MembersController) %>
++            <tr>
++            <th><%= Member.human_attribute_name(:administrator) %></th>
++                <td>
++                    <%= form.check_box :administrator %>
++                    <%= form.label :administrator %>
++                </td>
++            </tr>
++        <% end %>
++    <% end %>
++</table>
+\ No newline at end of file
+diff --git a/app/views/shared/_menubar.html.erb b/app/views/shared/_menubar.html.erb
+new file mode 100644
+index 0000000..fedc3b0
+--- /dev/null
++++ b/app/views/shared/_menubar.html.erb
+@@ -0,0 +1,8 @@
++<nav class="menubar">
++  <ul>
++    <%= menu_link_to "TOP映画一覧", "/" %>
++    <% if current_member&.administrator? %>
++        <%= menu_link_to "管理ページ", :admin_root %>
++    <% end %>
++  </ul>
++</nav>
+diff --git a/app/views/shared/_movie_form.erb b/app/views/shared/_movie_form.erb
+new file mode 100644
+index 0000000..830ead0
+--- /dev/null
++++ b/app/views/shared/_movie_form.erb
+@@ -0,0 +1,39 @@
++<%= render "shared/errors", obj: @movie %>
++<table class="attr">
++    <tr>
++        <th><%= form.label :title, "タイトル" %></th>
++        <td><%= form.text_field :title, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :story, "ストーリー" %></th>
++        <td><%= form.text_area :story, size: "30x5", autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :release_date, "公開日" %></th>
++        <td><%= form.date_select :release_date,
++                    use_month_numbers: true %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :running_time, "上映時間" %></th>
++        <td><%= form.number_field :running_time, min:0, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :distribution, "配給" %></th>
++        <td><%= form.text_field :distribution, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :director, "監督" %></th>
++        <td><%= form.text_field :director, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th><%= form.label :actor, "俳優" %></th>
++        <td><%= form.text_field :actor, autocomplete: 'off' %></td>
++    </tr>
++    <tr>
++        <th>状態</th>
++        <td><%= form.radio_button :finished, 0 %>
++        <%= form.label :finished_1, "公開中" %>
++        <%= form.radio_button :finished, 1 %>
++        <%= form.label :finished_2, "公開終了" %></td> 
++    </tr>
++</table>
+\ No newline at end of file
+diff --git a/app/views/shared/_sidebar.html.erb b/app/views/shared/_sidebar.html.erb
+new file mode 100644
+index 0000000..4141f3a
+--- /dev/null
++++ b/app/views/shared/_sidebar.html.erb
+@@ -0,0 +1 @@
++<%= render "shared/login_form" unless current_member %>
+diff --git a/bin/rails b/bin/rails
+index 5badb2f..0739660 100755
+--- a/bin/rails
++++ b/bin/rails
+@@ -1,9 +1,4 @@
+ #!/usr/bin/env ruby
+-begin
+-  load File.expand_path('../spring', __FILE__)
+-rescue LoadError => e
+-  raise unless e.message.include?('spring')
+-end
+ APP_PATH = File.expand_path('../config/application', __dir__)
+ require_relative '../config/boot'
+ require 'rails/commands'
+diff --git a/bin/rake b/bin/rake
+index d87d5f5..1724048 100755
+--- a/bin/rake
++++ b/bin/rake
+@@ -1,9 +1,4 @@
+ #!/usr/bin/env ruby
+-begin
+-  load File.expand_path('../spring', __FILE__)
+-rescue LoadError => e
+-  raise unless e.message.include?('spring')
+-end
+ require_relative '../config/boot'
+ require 'rake'
+ Rake.application.run
+diff --git a/bin/spring b/bin/spring
+deleted file mode 100755
+index d89ee49..0000000
+--- a/bin/spring
++++ /dev/null
+@@ -1,17 +0,0 @@
+-#!/usr/bin/env ruby
+-
+-# This file loads Spring without using Bundler, in order to be fast.
+-# It gets overwritten when you run the `spring binstub` command.
+-
+-unless defined?(Spring)
+-  require 'rubygems'
+-  require 'bundler'
+-
+-  lockfile = Bundler::LockfileParser.new(Bundler.default_lockfile.read)
+-  spring = lockfile.specs.detect { |spec| spec.name == 'spring' }
+-  if spring
+-    Gem.use_paths Gem.dir, Bundler.bundle_path.to_s, *Gem.path
+-    gem 'spring', spring.version
+-    require 'spring/binstub'
+-  end
+-end
+diff --git a/config/application.rb b/config/application.rb
+index 2d92016..5a28e96 100644
+--- a/config/application.rb
++++ b/config/application.rb
+@@ -1,7 +1,21 @@
+ require_relative 'boot'
+ 
++require "rails"
++# Pick the frameworks you want:
++require "active_model/railtie"
++require "active_job/railtie"
++require "active_record/railtie"
++require "active_storage/engine"
++require "action_controller/railtie"
++# require "action_mailer/railtie"
++require "action_view/railtie"
++# require "action_cable/engine"
++require "sprockets/railtie"
++require "rails/test_unit/railtie"
++require_relative 'boot'
+ require 'rails/all'
+ 
++
+ # Require the gems listed in Gemfile, including any gems
+ # you've limited to :test, :development, or :production.
+ Bundler.require(*Rails.groups)
+@@ -15,5 +29,25 @@ module Popcorn
+     # Application configuration can go into files in config/initializers
+     # -- all .rb files in that directory are automatically loaded after loading
+     # the framework and any gems in your application.
++    config.time_zone = "Tokyo"
++    config.i18n.default_locale = :ja
++    
++    config.action_controller.permit_all_parameters = true
++        # Initialize configuration defaults for originally generated Rails version.
++        # config.load_defaults 5.1
++        # ###この1行が必要
++        #     config.logger = Logger.new(STDOUT)
++        ###
++            # Settings in config/environments/* take precedence over those specified here.
++            # Application configuration should go into files in config/initializers
++            # -- all .rb files in that directory are automatically loaded.
++    config.exceptions_app = ->(env) do
++      ErrorsController.action(:show).call(env)
++    end
++                
++
+   end
+ end
++
++
++
+diff --git a/config/cable.yml b/config/cable.yml
+deleted file mode 100644
+index 9888c9f..0000000
+--- a/config/cable.yml
++++ /dev/null
+@@ -1,10 +0,0 @@
+-development:
+-  adapter: async
+-
+-test:
+-  adapter: async
+-
+-production:
+-  adapter: redis
+-  url: <%= ENV.fetch("REDIS_URL") { "redis://localhost:6379/1" } %>
+-  channel_prefix: popcorn_production
+diff --git a/config/credentials.yml.enc b/config/credentials.yml.enc
+index 1ea58a4..e4383b7 100644
+--- a/config/credentials.yml.enc
++++ b/config/credentials.yml.enc
+@@ -1 +1 @@
+-ytBKOOPyZy+l2Q9kgT4jqPYBop8UVCGwv1k7H79ndIMd745L5wZwCdrQS96WX7kiHhqyxdW737I5xGKpR2vlKplY6NESFFSh46sHcdYQdS9ZZNMV1mnteHAHR9viBwK3Wdb8ZuXf+jhctkqAiYwB9VXs7crtlQAT8vdlKZePohe/OmwGPasO9uS/zAWr5zFC15I7J9S3v4DQT0EXSyfPO2vj5VThnzRtF31SzGhLUlqLvJUZmJvfQVcbGS735r6K9FYzbtNiweejp5ivLUelCeKh+2T/AxkQ0ixPazh1ZLxa0CWNGen+6+mKmMIgRRCdsR/VVobvVX/+CASrIIpPDMYRE/TB+5eg9qlhu2DLK5/9FM9gjk/mtSsDJEo07/D0kuqQIF7182jaEObN7fNXUXrj27KFirp4fCIh--YQUR62lBVAldR76M--+1C1xkE8rcEvYOyhPbe3bA==
+\ No newline at end of file
++AzYsjU0qww5GmSWVB4bHzDEK5PwAsXxTlrao9zdPW3v4enwrd86+dMqpYfdugJk9Fk4f7EIb12TZn8bhkhL/gk7BNc86mddQx2H/uQUvkwvcEHnjrINfLBari0hu3HqSPZILPYtf2O0+tGcORDlYTjnhezHrEyT+9bmF6hFDhzGor0m3Y7SJiDCQg3FyJBY4k0Ip4AtEY4D6jLxBACMrqQj79jOCH5VrXN2oPgaoqWPxkXyogyirxtzGg5F4IGc6eAeuyxHUPYMZ7+sSrz/Ca9bfi/7V8eu2sjfOaMRwdl1uaQJjuffNiIcICBfUBg/bwciXCINF8v2g1LSolIzcp6Gg94EQNPCwYyji0cR+xLwd3aDhuMEoNnlEdxDcppcNKpiJle+eTNB8BWNjVNsg1t/rnQV+uuGzuHLH--hcDGJ5MiLUck2ZJo--LWzmOaoz7FCUyTFBmfU3YA==
+\ No newline at end of file
+diff --git a/config/database.yml b/config/database.yml
+index 0d02f24..2fedab3 100644
+--- a/config/database.yml
++++ b/config/database.yml
+@@ -22,4 +22,6 @@ test:
+ 
+ production:
+   <<: *default
+-  database: db/production.sqlite3
++  adapter: postgresql
++  encoding: unicode
++  pool: 5
+\ No newline at end of file
+diff --git a/config/environments/development.rb b/config/environments/development.rb
+index 1311e3e..b783faf 100644
+--- a/config/environments/development.rb
++++ b/config/environments/development.rb
+@@ -30,11 +30,6 @@ Rails.application.configure do
+   # Store uploaded files on the local file system (see config/storage.yml for options)
+   config.active_storage.service = :local
+ 
+-  # Don't care if the mailer can't send.
+-  config.action_mailer.raise_delivery_errors = false
+-
+-  config.action_mailer.perform_caching = false
+-
+   # Print deprecation notices to the Rails logger.
+   config.active_support.deprecation = :log
+ 
+diff --git a/config/environments/production.rb b/config/environments/production.rb
+index 5c24ae9..87c5ebd 100644
+--- a/config/environments/production.rb
++++ b/config/environments/production.rb
+@@ -41,11 +41,6 @@ Rails.application.configure do
+   # Store uploaded files on the local file system (see config/storage.yml for options)
+   config.active_storage.service = :local
+ 
+-  # Mount Action Cable outside main process or domain
+-  # config.action_cable.mount_path = nil
+-  # config.action_cable.url = 'wss://example.com/cable'
+-  # config.action_cable.allowed_request_origins = [ 'http://example.com', /http:\/\/example.*/ ]
+-
+   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
+   # config.force_ssl = true
+ 
+@@ -63,12 +58,6 @@ Rails.application.configure do
+   # config.active_job.queue_adapter     = :resque
+   # config.active_job.queue_name_prefix = "popcorn_#{Rails.env}"
+ 
+-  config.action_mailer.perform_caching = false
+-
+-  # Ignore bad email addresses and do not raise email delivery errors.
+-  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
+-  # config.action_mailer.raise_delivery_errors = false
+-
+   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
+   # the I18n.default_locale when a translation cannot be found).
+   config.i18n.fallbacks = true
+diff --git a/config/environments/test.rb b/config/environments/test.rb
+index 0a38fd3..fc9f9cc 100644
+--- a/config/environments/test.rb
++++ b/config/environments/test.rb
+@@ -31,13 +31,6 @@ Rails.application.configure do
+   # Store uploaded files on the local file system in a temporary directory
+   config.active_storage.service = :test
+ 
+-  config.action_mailer.perform_caching = false
+-
+-  # Tell Action Mailer not to deliver emails to the real world.
+-  # The :test delivery method accumulates sent emails in the
+-  # ActionMailer::Base.deliveries array.
+-  config.action_mailer.delivery_method = :test
+-
+   # Print deprecation notices to the stderr.
+   config.active_support.deprecation = :stderr
+ 
+diff --git a/config/initializers/generators.rb b/config/initializers/generators.rb
+new file mode 100644
+index 0000000..649bd8b
+--- /dev/null
++++ b/config/initializers/generators.rb
+@@ -0,0 +1,6 @@
++Rails.application.config.generators do |g|
++    g.helper false
++    g.assets false
++    g.skip_routes true
++    g.test_framework false 
++end
+\ No newline at end of file
+diff --git a/config/locales/ja.yml b/config/locales/ja.yml
+new file mode 100644
+index 0000000..0fb2402
+--- /dev/null
++++ b/config/locales/ja.yml
+@@ -0,0 +1,18 @@
++ja:
++  activerecord:
++    models:
++      member: 会員情報
++    attributes:
++      member:
++        user_name: ユーザ名
++        full_name: 氏名
++        administrator: 管理者
++        current_password: 現在のパスワード
++        password: 新しいパスワード
++        password_confirmation: 新しいパスワードの確認
++    errors:
++      messages:
++        invalid_member_name: は半角英数字で入力してください。
++        wrong: が正しくありません。
++        
++        
+\ No newline at end of file
+diff --git a/config/routes.rb b/config/routes.rb
+index 787824f..8bd71c1 100644
+--- a/config/routes.rb
++++ b/config/routes.rb
+@@ -1,3 +1,37 @@
+ Rails.application.routes.draw do
+   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
++  root "movies#index"
++
++  get "bad_request" => "top#bad_request"
++  get "forbidden" => "top#forbidden"
++  get "internal_server_error" => "top#internal_server_error"
++
++  resources :movies, only: [:index,:show] do
++    get 'search', on: :collection
++    resources :performances, only: [] do
++      resources :seats, only: [:index] do
++        resources :reservations,only: [:show,:new,:create]
++      end
++    end
++  end
++  resources :members, only: [:new,:create]
++  get "reservations" => "reservations#index"  
++  resource :session, only: [:create, :destroy]
++  resource :account
++  resource :password, only: [:show, :edit, :update]
++
++  namespace :admin do
++    root "movies#index"
++    get "reservations" => "reservations#index"
++    resources :members
++    resources :movies do
++      get 'search','finished', on: :collection
++      resources :performances, except: [:show,:edit] do
++        resources :seats, only: [:index] do
++          resources :reservations,only: [:show,:new,:create]
++        end
++      end
++    end
++  
++  end
+ end
+diff --git a/db/.DS_Store b/db/.DS_Store
+new file mode 100644
+index 0000000..41aaf89
+Binary files /dev/null and b/db/.DS_Store differ
+diff --git a/db/migrate/20201210070056_create_movies.rb b/db/migrate/20201210070056_create_movies.rb
+new file mode 100644
+index 0000000..6e52f66
+--- /dev/null
++++ b/db/migrate/20201210070056_create_movies.rb
+@@ -0,0 +1,16 @@
++class CreateMovies < ActiveRecord::Migration[5.2]
++  def change
++    create_table :movies do |t|
++      t.string :title, null: false
++      t.text :story, null: false
++      t.datetime :release_date, null: false
++      t.integer :running_time, null: false
++      t.string :distribution, null: false
++      t.string :director, null: false
++      t.text :actor, null: false
++      t.integer :finished, null: false, default: 0 #削除状態(0:未削除, 1:削除)
++      
++      t.timestamps
++    end
++  end
++end
+diff --git a/db/migrate/20201210070119_create_performances.rb b/db/migrate/20201210070119_create_performances.rb
+new file mode 100644
+index 0000000..4da8b6e
+--- /dev/null
++++ b/db/migrate/20201210070119_create_performances.rb
+@@ -0,0 +1,11 @@
++class CreatePerformances < ActiveRecord::Migration[5.2]
++  def change
++    create_table :performances do |t|
++      t.references :movie, foreign_key: true, null: false
++      t.date :screening_date, null: false
++      t.time :start_time, null: false
++      t.time :end_time, null: false
++      t.timestamps
++    end
++  end
++end
+diff --git a/db/migrate/20201210070142_create_reservations.rb b/db/migrate/20201210070142_create_reservations.rb
+new file mode 100644
+index 0000000..0bbefc5
+--- /dev/null
++++ b/db/migrate/20201210070142_create_reservations.rb
+@@ -0,0 +1,10 @@
++class CreateReservations < ActiveRecord::Migration[5.2]
++  def change
++    create_table :reservations do |t|
++      t.references :member, null: false
++      t.references :performance, null: false
++      t.references :kind, null: false
++      t.timestamps
++    end
++  end
++end
+diff --git a/db/migrate/20201210070236_create_members.rb b/db/migrate/20201210070236_create_members.rb
+new file mode 100644
+index 0000000..9dcc799
+--- /dev/null
++++ b/db/migrate/20201210070236_create_members.rb
+@@ -0,0 +1,17 @@
++class CreateMembers < ActiveRecord::Migration[5.2]
++  def change
++    create_table :members do |t|
++      t.string :user_name, null: false
++      t.string :full_name, null: false
++      t.string :email, null: false
++      t.date :birthday, null: false
++      t.integer :sex, null: false, default: 0
++      t.integer :credit_number, null: false
++      t.date :expiration_date, null: false
++      t.integer :authentication_number, null: false
++      t.boolean :administrator
++  
++      t.timestamps
++    end
++  end
++end
+diff --git a/db/migrate/20201210070248_create_seats.rb b/db/migrate/20201210070248_create_seats.rb
+new file mode 100644
+index 0000000..1299198
+--- /dev/null
++++ b/db/migrate/20201210070248_create_seats.rb
+@@ -0,0 +1,9 @@
++class CreateSeats < ActiveRecord::Migration[5.2]
++  def change
++    create_table :seats do |t|
++      t.string :en_number
++      t.string :number
++      t.timestamps
++    end
++  end
++end
+diff --git a/db/migrate/20201210070301_create_kinds.rb b/db/migrate/20201210070301_create_kinds.rb
+new file mode 100644
+index 0000000..6cf00f2
+--- /dev/null
++++ b/db/migrate/20201210070301_create_kinds.rb
+@@ -0,0 +1,9 @@
++class CreateKinds < ActiveRecord::Migration[5.2]
++  def change
++    create_table :kinds do |t|
++      t.string :kind_name, null: false
++      t.integer :fee, null: false
++      t.timestamps
++    end
++  end
++end
+diff --git a/db/migrate/20210104021612_alter_members1.rb b/db/migrate/20210104021612_alter_members1.rb
+new file mode 100644
+index 0000000..97b7d04
+--- /dev/null
++++ b/db/migrate/20210104021612_alter_members1.rb
+@@ -0,0 +1,5 @@
++class AlterMembers1 < ActiveRecord::Migration[5.2]
++  def change
++    add_column :members, :password_digest, :string
++  end
++end
+diff --git a/db/migrate/20210110013920_create_reservation_seats.rb b/db/migrate/20210110013920_create_reservation_seats.rb
+new file mode 100644
+index 0000000..b8ba542
+--- /dev/null
++++ b/db/migrate/20210110013920_create_reservation_seats.rb
+@@ -0,0 +1,10 @@
++class CreateReservationSeats < ActiveRecord::Migration[5.2]
++  def change
++    create_table :reservation_seats do |t|
++      t.references :reservation, null: false
++      t.references :seat, null: false
++
++      t.timestamps
++    end
++  end
++end
+diff --git a/db/migrate/20210112073946_create_performance_seats.rb b/db/migrate/20210112073946_create_performance_seats.rb
+new file mode 100644
+index 0000000..52ba15a
+--- /dev/null
++++ b/db/migrate/20210112073946_create_performance_seats.rb
+@@ -0,0 +1,9 @@
++class CreatePerformanceSeats < ActiveRecord::Migration[5.2]
++  def change
++    create_table :performance_seats do |t|
++      t.references :performance, null: false
++      t.references :seat, null: false
++      t.timestamps
++    end
++  end
++end
+diff --git a/db/schema.rb b/db/schema.rb
+new file mode 100644
+index 0000000..447a38b
+--- /dev/null
++++ b/db/schema.rb
+@@ -0,0 +1,96 @@
++# This file is auto-generated from the current state of the database. Instead
++# of editing this file, please use the migrations feature of Active Record to
++# incrementally modify your database, and then regenerate this schema definition.
++#
++# Note that this schema.rb definition is the authoritative source for your
++# database schema. If you need to create the application database on another
++# system, you should be using db:schema:load, not running all the migrations
++# from scratch. The latter is a flawed and unsustainable approach (the more migrations
++# you'll amass, the slower it'll run and the greater likelihood for issues).
++#
++# It's strongly recommended that you check this file into your version control system.
++
++ActiveRecord::Schema.define(version: 2021_01_12_073946) do
++
++  create_table "kinds", force: :cascade do |t|
++    t.string "kind_name", null: false
++    t.integer "fee", null: false
++    t.datetime "created_at", null: false
++    t.datetime "updated_at", null: false
++  end
++
++  create_table "members", force: :cascade do |t|
++    t.string "user_name", null: false
++    t.string "full_name", null: false
++    t.string "email", null: false
++    t.date "birthday", null: false
++    t.integer "sex", default: 0, null: false
++    t.integer "credit_number", null: false
++    t.date "expiration_date", null: false
++    t.integer "authentication_number", null: false
++    t.boolean "administrator"
++    t.datetime "created_at", null: false
++    t.datetime "updated_at", null: false
++    t.string "password_digest"
++  end
++
++  create_table "movies", force: :cascade do |t|
++    t.string "title", null: false
++    t.text "story", null: false
++    t.datetime "release_date", null: false
++    t.integer "running_time", null: false
++    t.string "distribution", null: false
++    t.string "director", null: false
++    t.text "actor", null: false
++    t.integer "finished", default: 0, null: false
++    t.datetime "created_at", null: false
++    t.datetime "updated_at", null: false
++  end
++
++  create_table "performance_seats", force: :cascade do |t|
++    t.integer "performance_id", null: false
++    t.integer "seat_id", null: false
++    t.datetime "created_at", null: false
++    t.datetime "updated_at", null: false
++    t.index ["performance_id"], name: "index_performance_seats_on_performance_id"
++    t.index ["seat_id"], name: "index_performance_seats_on_seat_id"
++  end
++
++  create_table "performances", force: :cascade do |t|
++    t.integer "movie_id", null: false
++    t.date "screening_date", null: false
++    t.time "start_time", null: false
++    t.time "end_time", null: false
++    t.datetime "created_at", null: false
++    t.datetime "updated_at", null: false
++    t.index ["movie_id"], name: "index_performances_on_movie_id"
++  end
++
++  create_table "reservation_seats", force: :cascade do |t|
++    t.integer "reservation_id", null: false
++    t.integer "seat_id", null: false
++    t.datetime "created_at", null: false
++    t.datetime "updated_at", null: false
++    t.index ["reservation_id"], name: "index_reservation_seats_on_reservation_id"
++    t.index ["seat_id"], name: "index_reservation_seats_on_seat_id"
++  end
++
++  create_table "reservations", force: :cascade do |t|
++    t.integer "member_id", null: false
++    t.integer "performance_id", null: false
++    t.integer "kind_id", null: false
++    t.datetime "created_at", null: false
++    t.datetime "updated_at", null: false
++    t.index ["kind_id"], name: "index_reservations_on_kind_id"
++    t.index ["member_id"], name: "index_reservations_on_member_id"
++    t.index ["performance_id"], name: "index_reservations_on_performance_id"
++  end
++
++  create_table "seats", force: :cascade do |t|
++    t.string "en_number"
++    t.string "number"
++    t.datetime "created_at", null: false
++    t.datetime "updated_at", null: false
++  end
++
++end
+diff --git a/db/seeds.rb b/db/seeds.rb
+index 1beea2a..531f98e 100644
+--- a/db/seeds.rb
++++ b/db/seeds.rb
+@@ -1,7 +1,9 @@
+-# This file should contain all the record creation needed to seed the database with its default values.
+-# The data can then be loaded with the rails db:seed command (or created alongside the database with db:setup).
+-#
+-# Examples:
+-#
+-#   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
+-#   Character.create(name: 'Luke', movie: movies.first)
++table_names = %w(movies members performances seats kinds)
++table_names.each do |table_name|
++
++    path = Rails.root.join("db/seeds", Rails.env, table_name + ".rb")
++        if File.exist?(path)
++            puts "Creating #{table_name}..."
++            require path
++        end
++end
+diff --git a/db/seeds/.DS_Store b/db/seeds/.DS_Store
+new file mode 100644
+index 0000000..903e484
+Binary files /dev/null and b/db/seeds/.DS_Store differ
+diff --git a/db/seeds/development/kinds.rb b/db/seeds/development/kinds.rb
+new file mode 100644
+index 0000000..1b510b9
+--- /dev/null
++++ b/db/seeds/development/kinds.rb
+@@ -0,0 +1,9 @@
++kind_names = %w(一般 大学生・高校生 幼児・小中高生 シニア)
++fees = %w(2000 1800 1300 1300)
++
++0.upto(3) do |idx|
++    Kind.create(
++        kind_name: kind_names[idx],
++        fee: fees[idx]
++    )
++end
+\ No newline at end of file
+diff --git a/db/seeds/development/members.rb b/db/seeds/development/members.rb
+new file mode 100644
+index 0000000..d4570b0
+--- /dev/null
++++ b/db/seeds/development/members.rb
+@@ -0,0 +1,18 @@
++names = %w(Taro Jiro Hana John Mike Sophy Bill Alex Mary Tom)
++fnames = ["佐藤", "鈴木", "高橋", "田中"]
++gnames = ["太郎", "次郎", "花子"]
++0.upto(9) do |idx|
++  Member.create(
++    user_name: names[idx],
++    full_name: "#{fnames[idx % 4]} #{gnames[idx % 3]}",
++    email: "#{names[idx]}@example.com",
++    birthday: "1981-12-01",
++    sex: [1, 1, 2][idx % 3],
++    credit_number: idx,
++    expiration_date: "2025-10-10",
++    authentication_number: idx,
++    administrator: (idx == 0),
++    password: "pop",
++    password_confirmation: "pop"
++  )
++end
+diff --git a/db/seeds/development/movies.rb b/db/seeds/development/movies.rb
+new file mode 100644
+index 0000000..35b6e5b
+--- /dev/null
++++ b/db/seeds/development/movies.rb
+@@ -0,0 +1,16 @@
++titles = %w(月曜のmoon 火曜のfire 水曜のwater 木曜のtree 金曜のmoney 土曜のsoil 日曜のsun)
++stories = %w(月曜のお話。 火曜のお話。 水曜のお話。 木曜のお話 金曜のお話 土曜のお話 日曜のお話。)
++times = [90,120]
++actors = "佐藤修 鈴木賢人 高橋花子 田中美紀 滑大郎"
++0.upto(6) do |idx|
++  Movie.create(
++    title: titles[idx],
++    story: stories[idx],
++    release_date: "2021-01-07",
++    running_time: times[idx%2],
++    distribution: "西宝",
++    director: "美弥咲　隼男",
++    actor: actors,
++    finished: 0
++  )
++end
+\ No newline at end of file
+diff --git a/db/seeds/development/performances.rb b/db/seeds/development/performances.rb
+new file mode 100644
+index 0000000..7ef65af
+--- /dev/null
++++ b/db/seeds/development/performances.rb
+@@ -0,0 +1,14 @@
++date = %w(2021-01-01 2021-01-02 2021-01-03)
++stime = ['12:00','15:00','18:00']
++etime = %w(13:30 16:30 19:30)
++
++1.upto(10) do |idx|
++    0.upto(2) do |n|
++        Performance.create(
++            movie_id: idx,
++            screening_date: date[n],
++            start_time: stime[n],
++            end_time: etime[n]
++        )
++    end
++end
+\ No newline at end of file
+diff --git a/db/seeds/development/seats.rb b/db/seeds/development/seats.rb
+new file mode 100644
+index 0000000..15ec732
+--- /dev/null
++++ b/db/seeds/development/seats.rb
+@@ -0,0 +1,22 @@
++srow = %w(A B)
++lrow = %w(C D E F G H)
++
++
++srow.each do |e| 
++    12.downto(3) do |n|
++        Seat.create(
++            en_number: e,
++            number: n
++        )
++    end
++end
++
++lrow.each do |e|
++    14.downto(1) do |n|
++        Seat.create(
++            en_number: e,
++            number: n
++        )
++    end
++end
++
+diff --git a/db/seeds/production/.DS_Store b/db/seeds/production/.DS_Store
+new file mode 100644
+index 0000000..5008ddf
+Binary files /dev/null and b/db/seeds/production/.DS_Store differ
+diff --git a/db/seeds/production/kinds.rb b/db/seeds/production/kinds.rb
+new file mode 100644
+index 0000000..1b510b9
+--- /dev/null
++++ b/db/seeds/production/kinds.rb
+@@ -0,0 +1,9 @@
++kind_names = %w(一般 大学生・高校生 幼児・小中高生 シニア)
++fees = %w(2000 1800 1300 1300)
++
++0.upto(3) do |idx|
++    Kind.create(
++        kind_name: kind_names[idx],
++        fee: fees[idx]
++    )
++end
+\ No newline at end of file
+diff --git a/db/seeds/production/members.rb b/db/seeds/production/members.rb
+new file mode 100644
+index 0000000..d4570b0
+--- /dev/null
++++ b/db/seeds/production/members.rb
+@@ -0,0 +1,18 @@
++names = %w(Taro Jiro Hana John Mike Sophy Bill Alex Mary Tom)
++fnames = ["佐藤", "鈴木", "高橋", "田中"]
++gnames = ["太郎", "次郎", "花子"]
++0.upto(9) do |idx|
++  Member.create(
++    user_name: names[idx],
++    full_name: "#{fnames[idx % 4]} #{gnames[idx % 3]}",
++    email: "#{names[idx]}@example.com",
++    birthday: "1981-12-01",
++    sex: [1, 1, 2][idx % 3],
++    credit_number: idx,
++    expiration_date: "2025-10-10",
++    authentication_number: idx,
++    administrator: (idx == 0),
++    password: "pop",
++    password_confirmation: "pop"
++  )
++end
+diff --git a/db/seeds/production/movies.rb b/db/seeds/production/movies.rb
+new file mode 100644
+index 0000000..35b6e5b
+--- /dev/null
++++ b/db/seeds/production/movies.rb
+@@ -0,0 +1,16 @@
++titles = %w(月曜のmoon 火曜のfire 水曜のwater 木曜のtree 金曜のmoney 土曜のsoil 日曜のsun)
++stories = %w(月曜のお話。 火曜のお話。 水曜のお話。 木曜のお話 金曜のお話 土曜のお話 日曜のお話。)
++times = [90,120]
++actors = "佐藤修 鈴木賢人 高橋花子 田中美紀 滑大郎"
++0.upto(6) do |idx|
++  Movie.create(
++    title: titles[idx],
++    story: stories[idx],
++    release_date: "2021-01-07",
++    running_time: times[idx%2],
++    distribution: "西宝",
++    director: "美弥咲　隼男",
++    actor: actors,
++    finished: 0
++  )
++end
+\ No newline at end of file
+diff --git a/db/seeds/production/performances.rb b/db/seeds/production/performances.rb
+new file mode 100644
+index 0000000..7ef65af
+--- /dev/null
++++ b/db/seeds/production/performances.rb
+@@ -0,0 +1,14 @@
++date = %w(2021-01-01 2021-01-02 2021-01-03)
++stime = ['12:00','15:00','18:00']
++etime = %w(13:30 16:30 19:30)
++
++1.upto(10) do |idx|
++    0.upto(2) do |n|
++        Performance.create(
++            movie_id: idx,
++            screening_date: date[n],
++            start_time: stime[n],
++            end_time: etime[n]
++        )
++    end
++end
+\ No newline at end of file
+diff --git a/db/seeds/production/seats.rb b/db/seeds/production/seats.rb
+new file mode 100644
+index 0000000..15ec732
+--- /dev/null
++++ b/db/seeds/production/seats.rb
+@@ -0,0 +1,22 @@
++srow = %w(A B)
++lrow = %w(C D E F G H)
++
++
++srow.each do |e| 
++    12.downto(3) do |n|
++        Seat.create(
++            en_number: e,
++            number: n
++        )
++    end
++end
++
++lrow.each do |e|
++    14.downto(1) do |n|
++        Seat.create(
++            en_number: e,
++            number: n
++        )
++    end
++end
++
+diff --git a/erd.pdf b/erd.pdf
+new file mode 100644
+index 0000000..82877fe
+Binary files /dev/null and b/erd.pdf differ
+diff --git a/lib/tasks/database.rake b/lib/tasks/database.rake
+new file mode 100644
+index 0000000..210fff2
+--- /dev/null
++++ b/lib/tasks/database.rake
+@@ -0,0 +1,8 @@
++namespace :db do
++  desc "Rebuild the development database from scratch"
++  task :rebuild => :environment do
++    sh "rm -f db/development.sqlite3"
++    Rake::Task["db:migrate"].invoke
++    Rake::Task["db:seed"].invoke
++  end
++end
+diff --git a/test/integration/popcorn_test.rb b/test/integration/popcorn_test.rb
+new file mode 100644
+index 0000000..0811e4a
+--- /dev/null
++++ b/test/integration/popcorn_test.rb
+@@ -0,0 +1,16 @@
++require 'test_helper'
++
++class PopcornTest < ActionDispatch::IntegrationTest
++    test "cannot reserve sold_seat" do
++        post "/session", params:{ name:"Taro",password: "pop"}
++        assert_difference "Reservation.count", +0 do
++            post "/movies/1/performances/1/seats/1/reservations",params: {
++                performance_seat: {
++                    seat_id: 1,
++                    performance_id: 1
++                }
++            }
++        end
++        assert_response :redirect
++    end
++end
+\ No newline at end of file
+diff --git a/test/mailers/.keep b/test/mailers/.keep
+deleted file mode 100644
+index e69de29..0000000

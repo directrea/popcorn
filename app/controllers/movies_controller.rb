@@ -14,6 +14,7 @@ class MoviesController < ApplicationController
         @movie = Movie.find(params[:id])
     end
 
+
     def bad_request
         raise ActionController::ParameterMissing, ""
       end

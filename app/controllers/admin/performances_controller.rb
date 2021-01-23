@@ -1,5 +1,7 @@
 class Admin::PerformancesController < Admin::Base
   require'date'
+  layout 'reservations.html.erb'
+
   def index
     @performances = Performance.where(movie_id: params[:movie_id]).order(:screening_date).order(:start_time)
     @performance = Performance.new(movie_id: params[:id])
@@ -10,10 +12,10 @@ class Admin::PerformancesController < Admin::Base
     @movie = Movie.find_by(id: params[:movie_id])
     @performance[:end_time] = @performance.start_time + @movie.running_time.minute
     @performance.movie = @movie
-    if @performance.save!
+    if @performance.save
       redirect_to admin_movie_performances_url, notice: "登録しました"
     else
-      redirect_to admin_movie_performances_url
+      redirect_to admin_movie_performances_url, flash:{ errors: @performance.errors.full_messages}
     end
     # hash= params[:performance]
     # hash["movie_id"] = params[:id]
@@ -31,4 +33,5 @@ class Admin::PerformancesController < Admin::Base
     private def performance_params
       params.require(:performance)
     end
+
 end

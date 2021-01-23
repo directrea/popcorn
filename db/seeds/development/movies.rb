@@ -6,7 +6,7 @@ actors = "佐藤修 鈴木賢人 高橋花子 田中美紀 滑大郎"
   Movie.create(
     title: titles[idx],
     story: stories[idx],
-    release_date: "2021-01-07",
+    release_date: Date.today,
     running_time: times[idx%2],
     distribution: "西宝",
     director: "美弥咲　隼男",
