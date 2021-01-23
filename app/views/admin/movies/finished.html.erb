@@ -5,7 +5,7 @@
         <% @movies.each do |movie| %>
             <div class="movie_block">
                 <li>
-                    <h3 class="movie_title"><%= link_to movie.title, movie_path(id: movie.id) %>
+                    <h3 class="movie_title"><%= link_to movie.title, admin_movie_path(id: movie.id) %>
                         <p><%= link_to "スケジュール編集", admin_movie_performances_path(movie_id: movie.id) %></p>
                     </h3>
                     <% movie.performances.each do |pf| %>

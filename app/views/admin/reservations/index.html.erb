@@ -20,7 +20,7 @@
                     <td><%= r.kind.kind_name %></td>
                     <td><%= r.performance.movie.title%></td>
                     <td><%= r.performance.screening_date %></td>
-                    <td><%= r.created_at.strftime('%F %T') %></td>
+                    <td><%= r.created_at.strftime('%F %k:%M') %></td>
                 </tr>
             <% end %>
         </tbody>
