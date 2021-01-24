@@ -10,4 +10,5 @@ class Performance < ApplicationRecord
         errors.add(:screening_date, "は上映日以降のものを選択してください") if
         screening_date < Movie.find(movie_id).release_date
     end
+
 end

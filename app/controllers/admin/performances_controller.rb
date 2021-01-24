@@ -26,8 +26,12 @@ class Admin::PerformancesController < Admin::Base
 
     def destroy
       @performance = Performance.find(params[:id])
-      @performance.destroy
-      redirect_to admin_movie_performances_path
+      if @performance.reservations.present?
+        redirect_to admin_movie_performances_path, flash: {notice: "予約が存在するため削除できません。"}
+      else
+        @performance.destroy
+        redirect_to admin_movie_performances_path, flash: {notice: "上映を削除しました。"}
+      end
     end
 
     private def performance_params
