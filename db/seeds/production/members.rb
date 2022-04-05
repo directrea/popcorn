@@ -1,6 +1,6 @@
-names = %w(Taro Jiro Hana John Mike Sophy Bill Alex Mary Tom)
-fnames = ["佐藤", "鈴木", "高橋", "田中"]
-gnames = ["太郎", "次郎", "花子"]
+names = %w(admin member Hana John Mike Sophy Bill Alex Mary Tom)
+fnames = ["admin", "鈴木", "高橋", "田中"]
+gnames = ["admin", "次郎", "花子"]
 0.upto(9) do |idx|
   Member.create(
     user_name: names[idx],
