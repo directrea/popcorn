@@ -1,5 +1,5 @@
 <% @page_title = "映画一覧" %>
-<h1><%= @page_title %><%= "※ログインすると予約できます" unless current_member %></h1>
+<h1><%= @page_title %><%= "※上映時間をクリックで予約" if current_member %><%= "※ログインすると予約できます" unless current_member %></h1>
 
 <%= form_tag(search_movies_path,:method => 'get') do %>
   <%= text_field_tag "title" %>
